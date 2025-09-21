@@ -1,0 +1,17 @@
+[project]
+name = "opal"
+version = "0.1.0"
+description = "OCN opal"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{name="Ahsan Azmi"}]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "coverage", "ruff", "black", "mypy"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.black]
+line-length = 100
