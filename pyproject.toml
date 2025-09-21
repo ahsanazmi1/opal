@@ -5,7 +5,12 @@ description = "OCN opal"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{name="Ahsan Azmi"}]
-dependencies = []
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "python-multipart>=0.0.6"
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "coverage", "ruff", "black", "mypy"]
