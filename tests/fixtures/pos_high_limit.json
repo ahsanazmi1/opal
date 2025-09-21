@@ -1,0 +1,26 @@
+{
+  "actor_id": "test_user_123",
+  "payment_method_id": "pm_test_user_123_visa_001",
+  "amount": 8000.0,
+  "currency": "USD",
+  "mcc": "5411",
+  "channel": "pos",
+  "merchant_id": "merchant_123",
+  "expected_result": {
+    "allowed": true,
+    "token_reference": "tok_test_user_123_9876543210",
+    "reasons": [
+      "Amount $8000.0 within MCC 5411 limit of $2000.0",
+      "Amount $8000.0 within pos channel limit of $10000.0",
+      "Daily limit check passed for pos channel",
+      "Transaction approved with token reference: tok_test_user_123_9876543210"
+    ],
+    "limits_applied": [
+      "MCC 5411 limit: $2000.0",
+      "Channel pos limit: $10000.0",
+      "Daily pos limit: $25000.0"
+    ],
+    "max_amount_allowed": 2000.0,
+    "control_version": "v1.0.0"
+  }
+}
