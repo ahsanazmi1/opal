@@ -15,25 +15,31 @@ Opal provides intelligent payment method selection and spend controls for the OC
 - **Open Architecture** - Integrates seamlessly with OCN protocols
 - **MCP Integration** - Model Context Protocol support for agent interactions
 
-## Quick Start
+## Quickstart (≤ 60s)
 
 ```bash
 # Clone and setup
 git clone https://github.com/ocn-ai/opal.git
 cd opal
 
-# Create virtual environment
-python -m venv .venv && source .venv/bin/activate
-
-# Install dependencies
-pip install -U pip && pip install -e .[dev]
+# Setup development environment
+make setup
 
 # Run tests
-pytest -q
+make test
 
 # Start the service
-uvicorn opal.api:app --reload
+make run
 ```
+
+### Available Make Commands
+
+- `make setup` - Create venv, install deps + dev extras, install pre-commit hooks
+- `make lint` - Run ruff and black checks
+- `make fmt` - Format code with black
+- `make test` - Run pytest with coverage
+- `make run` - Start FastAPI app with uvicorn
+- `make clean` - Remove virtual environment and cache files
 
 ## Related OCN Repositories
 

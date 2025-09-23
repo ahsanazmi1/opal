@@ -13,3 +13,4 @@ src/opal.egg-info/top_level.txt
 src/opal/mcp/server.py
 tests/test_api.py
 tests/test_controls.py
+tests/test_mcp_smoke.py
