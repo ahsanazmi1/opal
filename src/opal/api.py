@@ -9,6 +9,10 @@ from pydantic import BaseModel, Field
 
 from .controls import SpendControls, TransactionRequest, PaymentMethod, SpendControlResult
 from .events import emit_method_selected_event
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from mcp.server import router as mcp_router
 
 
 app = FastAPI(
@@ -16,6 +20,9 @@ app = FastAPI(
     description="Open Wallet Agent providing payment method selection and spend controls",
     version="0.1.0"
 )
+
+# Include MCP router
+app.include_router(mcp_router)
 
 
 # Pydantic models for API
