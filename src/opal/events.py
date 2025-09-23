@@ -13,7 +13,7 @@ from .controls import PaymentMethod, TransactionRequest, SpendControlResult
 
 class MethodSelectedEvent(BaseModel):
     """CloudEvent for payment method selections."""
-    
+
     specversion: str = "1.0"
     id: str
     source: str
@@ -27,7 +27,7 @@ class MethodSelectedEvent(BaseModel):
 
 class MethodSelectedData(BaseModel):
     """Data payload for method selected events."""
-    
+
     actor_id: str
     payment_method: Dict[str, Any]
     transaction_request: Dict[str, Any]
@@ -44,14 +44,14 @@ async def emit_method_selected_event(
 ) -> MethodSelectedEvent:
     """
     Emit a CloudEvent for payment method selection.
-    
+
     Args:
         actor_id: Actor identifier
         payment_method: Selected payment method
         transaction_request: Transaction request details
         control_result: Spend control evaluation result
         source: Event source URI
-        
+
     Returns:
         CloudEvent object (in production, this would be sent to an event bus)
     """
@@ -66,7 +66,7 @@ async def emit_method_selected_event(
         "status": payment_method.status,
         "metadata": payment_method.metadata
     }
-    
+
     transaction_request_dict = {
         "amount": float(transaction_request.amount),
         "currency": transaction_request.currency,
@@ -76,7 +76,7 @@ async def emit_method_selected_event(
         "actor_id": transaction_request.actor_id,
         "payment_method_id": transaction_request.payment_method_id
     }
-    
+
     control_result_dict = {
         "allowed": control_result.allowed,
         "token_reference": control_result.token_reference,
@@ -85,7 +85,7 @@ async def emit_method_selected_event(
         "max_amount_allowed": float(control_result.max_amount_allowed) if control_result.max_amount_allowed else None,
         "control_version": control_result.control_version
     }
-    
+
     # Create event data
     event_data = MethodSelectedData(
         actor_id=actor_id,
@@ -94,7 +94,7 @@ async def emit_method_selected_event(
         control_result=control_result_dict,
         timestamp=datetime.now(timezone.utc).isoformat()
     )
-    
+
     # Create CloudEvent
     event = MethodSelectedEvent(
         id=str(uuid4()),
@@ -103,11 +103,11 @@ async def emit_method_selected_event(
         time=datetime.now(timezone.utc).isoformat(),
         data=event_data.model_dump()
     )
-    
+
     # In production, this would send the event to an event bus
     # For now, we'll just log it
     print(f"Method Selected Event: {event.model_dump_json()}")
-    
+
     return event
 
 

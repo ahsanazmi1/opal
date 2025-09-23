@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 class PaymentMethod(BaseModel):
     """Payment method information."""
-    
+
     method_id: str = Field(..., description="Unique payment method identifier")
     type: str = Field(..., description="Payment method type (card, bank, wallet)")
     provider: str = Field(..., description="Payment provider (visa, mastercard, etc.)")
@@ -23,7 +23,7 @@ class PaymentMethod(BaseModel):
 
 class TransactionRequest(BaseModel):
     """Transaction request for spend control evaluation."""
-    
+
     amount: Decimal = Field(..., gt=0, description="Transaction amount")
     currency: str = Field("USD", description="Transaction currency")
     mcc: Optional[str] = Field(None, description="Merchant Category Code")
@@ -35,7 +35,7 @@ class TransactionRequest(BaseModel):
 
 class SpendControlResult(BaseModel):
     """Result of spend control evaluation."""
-    
+
     allowed: bool = Field(..., description="Whether transaction is allowed")
     token_reference: Optional[str] = Field(None, description="Token reference if allowed")
     reasons: List[str] = Field(..., description="Reasons for decision")
@@ -46,24 +46,24 @@ class SpendControlResult(BaseModel):
 
 class SpendControls:
     """Deterministic spend controls for Opal wallet."""
-    
+
     # Control limits by MCC and channel
     MCC_LIMITS = {
         # High-risk categories - lower limits
         "5999": {"max_amount": Decimal("100"), "description": "Miscellaneous retail - high risk"},
         "7995": {"max_amount": Decimal("50"), "description": "Gambling - restricted"},
         "7994": {"max_amount": Decimal("50"), "description": "Video game arcades - restricted"},
-        
+
         # Medium-risk categories
         "5814": {"max_amount": Decimal("500"), "description": "Fast food restaurants"},
         "5812": {"max_amount": Decimal("300"), "description": "Restaurants"},
         "5541": {"max_amount": Decimal("200"), "description": "Gas stations"},
-        
+
         # Low-risk categories - higher limits
         "5411": {"max_amount": Decimal("2000"), "description": "Grocery stores"},
         "5310": {"max_amount": Decimal("1500"), "description": "Discount stores"},
     }
-    
+
     # Channel limits
     CHANNEL_LIMITS = {
         "web": {"max_amount": Decimal("5000"), "description": "Web transactions"},
@@ -72,7 +72,7 @@ class SpendControls:
         "atm": {"max_amount": Decimal("500"), "description": "ATM transactions"},
         "api": {"max_amount": Decimal("10000"), "description": "API transactions"},
     }
-    
+
     # Daily limits by channel
     DAILY_LIMITS = {
         "web": Decimal("15000"),
@@ -81,7 +81,7 @@ class SpendControls:
         "atm": Decimal("2000"),
         "api": Decimal("50000"),
     }
-    
+
     # Payment method type limits
     METHOD_LIMITS = {
         "card": {"max_amount": Decimal("10000"), "description": "Card payments"},
@@ -89,46 +89,46 @@ class SpendControls:
         "wallet": {"max_amount": Decimal("5000"), "description": "Digital wallet"},
         "crypto": {"max_amount": Decimal("1000"), "description": "Cryptocurrency"},
     }
-    
+
     @classmethod
     def evaluate_transaction(cls, request: TransactionRequest) -> SpendControlResult:
         """
         Evaluate a transaction request against spend controls.
-        
+
         Args:
             request: Transaction request to evaluate
-            
+
         Returns:
             Spend control result with allow/deny decision and token reference
         """
         reasons = []
         limits_applied = []
         max_amount_allowed = Decimal("999999")  # Start with very high limit
-        
+
         # Check MCC limits
         if request.mcc and request.mcc in cls.MCC_LIMITS:
             mcc_limit = cls.MCC_LIMITS[request.mcc]["max_amount"]
             max_amount_allowed = min(max_amount_allowed, mcc_limit)
             limits_applied.append(f"MCC {request.mcc} limit: ${mcc_limit}")
-            
+
             if request.amount > mcc_limit:
                 reasons.append(f"Amount ${request.amount} exceeds MCC {request.mcc} limit of ${mcc_limit}")
                 return cls._create_denied_result(request, reasons, limits_applied)
             else:
                 reasons.append(f"Amount ${request.amount} within MCC {request.mcc} limit of ${mcc_limit}")
-        
+
         # Check channel limits
         if request.channel in cls.CHANNEL_LIMITS:
             channel_limit = cls.CHANNEL_LIMITS[request.channel]["max_amount"]
             max_amount_allowed = min(max_amount_allowed, channel_limit)
             limits_applied.append(f"Channel {request.channel} limit: ${channel_limit}")
-            
+
             if request.amount > channel_limit:
                 reasons.append(f"Amount ${request.amount} exceeds {request.channel} channel limit of ${channel_limit}")
                 return cls._create_denied_result(request, reasons, limits_applied)
             else:
                 reasons.append(f"Amount ${request.amount} within {request.channel} channel limit of ${channel_limit}")
-        
+
         # Check daily limits (simplified - in production would check actual usage)
         if request.channel in cls.DAILY_LIMITS:
             daily_limit = cls.DAILY_LIMITS[request.channel]
@@ -136,12 +136,12 @@ class SpendControls:
             # In production, this would query actual transaction history
             limits_applied.append(f"Daily {request.channel} limit: ${daily_limit}")
             reasons.append(f"Daily limit check passed for {request.channel} channel")
-        
+
         # Generate token reference if allowed
         token_reference = cls._generate_token_reference(request)
-        
+
         reasons.append(f"Transaction approved with token reference: {token_reference}")
-        
+
         return SpendControlResult(
             allowed=True,
             token_reference=token_reference,
@@ -150,7 +150,7 @@ class SpendControls:
             max_amount_allowed=max_amount_allowed,
             control_version="v1.0.0"
         )
-    
+
     @classmethod
     def _generate_token_reference(cls, request: TransactionRequest) -> str:
         """Generate a deterministic token reference for the transaction."""
@@ -158,7 +158,7 @@ class SpendControls:
         token_data = f"{request.actor_id}:{request.payment_method_id}:{request.amount}:{request.channel}:{request.mcc or 'none'}"
         token_hash = hash(token_data)
         return f"tok_{request.actor_id}_{abs(token_hash)}"
-    
+
     @classmethod
     def _create_denied_result(cls, request: TransactionRequest, reasons: List[str], limits_applied: List[str]) -> SpendControlResult:
         """Create a denied spend control result."""
@@ -170,15 +170,15 @@ class SpendControls:
             max_amount_allowed=None,
             control_version="v1.0.0"
         )
-    
+
     @classmethod
     def get_available_payment_methods(cls, actor_id: str) -> List[PaymentMethod]:
         """
         Get available payment methods for an actor (stubbed).
-        
+
         Args:
             actor_id: Actor identifier
-            
+
         Returns:
             List of available payment methods
         """
@@ -221,9 +221,9 @@ class SpendControls:
                 metadata={"wallet_type": "paypal", "verified": "true"}
             )
         ]
-        
+
         return methods
-    
+
     @classmethod
     def get_control_limits(cls) -> Dict[str, any]:
         """Get current control limits and parameters."""

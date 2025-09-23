@@ -166,23 +166,23 @@ async def main():
         command="python",
         args=["-m", "opal.mcp.server"]
     )
-    
+
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             # Initialize the session
             await session.initialize()
-            
+
             # List available tools
             tools = await session.list_tools()
             print(f"Available tools: {[tool.name for tool in tools.tools]}")
-            
+
             # Call listPaymentMethods
             result = await session.call_tool(
                 "listPaymentMethods",
                 {"actor_id": "user_123"}
             )
             print(f"Payment methods: {result.content[0].text}")
-            
+
             # Call selectPaymentMethod
             result = await session.call_tool(
                 "selectPaymentMethod",

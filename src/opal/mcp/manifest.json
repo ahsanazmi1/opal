@@ -1,91 +1,101 @@
 {
-  "name": "opal-wallet-agent",
-  "version": "0.1.0",
-  "description": "Open Wallet Agent providing payment method selection and spend controls via MCP",
-  "capabilities": {
-    "tools": [
-      {
-        "name": "listPaymentMethods",
-        "description": "List available payment methods for an actor",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "actor_id": {
-              "type": "string",
-              "description": "Actor identifier"
+    "name": "opal-wallet-agent",
+    "version": "0.1.0",
+    "description": "Open Wallet Agent providing payment method selection and spend controls via MCP",
+    "capabilities": {
+        "tools": [
+            {
+                "name": "listPaymentMethods",
+                "description": "List available payment methods for an actor",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "actor_id": {
+                            "type": "string",
+                            "description": "Actor identifier"
+                        }
+                    },
+                    "required": [
+                        "actor_id"
+                    ]
+                }
+            },
+            {
+                "name": "selectPaymentMethod",
+                "description": "Select a payment method and evaluate against spend controls",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "actor_id": {
+                            "type": "string",
+                            "description": "Actor identifier"
+                        },
+                        "payment_method_id": {
+                            "type": "string",
+                            "description": "Selected payment method ID"
+                        },
+                        "amount": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Transaction amount"
+                        },
+                        "currency": {
+                            "type": "string",
+                            "description": "Transaction currency",
+                            "default": "USD"
+                        },
+                        "mcc": {
+                            "type": "string",
+                            "description": "Merchant Category Code (optional)"
+                        },
+                        "channel": {
+                            "type": "string",
+                            "description": "Transaction channel (web, mobile, pos, atm, api)"
+                        },
+                        "merchant_id": {
+                            "type": "string",
+                            "description": "Merchant identifier (optional)"
+                        }
+                    },
+                    "required": [
+                        "actor_id",
+                        "payment_method_id",
+                        "amount",
+                        "channel"
+                    ]
+                }
+            },
+            {
+                "name": "getControlLimits",
+                "description": "Get current spend control limits and parameters",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
             }
-          },
-          "required": ["actor_id"]
-        }
-      },
-      {
-        "name": "selectPaymentMethod",
-        "description": "Select a payment method and evaluate against spend controls",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "actor_id": {
-              "type": "string",
-              "description": "Actor identifier"
-            },
-            "payment_method_id": {
-              "type": "string",
-              "description": "Selected payment method ID"
-            },
-            "amount": {
-              "type": "number",
-              "minimum": 0,
-              "description": "Transaction amount"
-            },
-            "currency": {
-              "type": "string",
-              "description": "Transaction currency",
-              "default": "USD"
-            },
-            "mcc": {
-              "type": "string",
-              "description": "Merchant Category Code (optional)"
-            },
-            "channel": {
-              "type": "string",
-              "description": "Transaction channel (web, mobile, pos, atm, api)"
-            },
-            "merchant_id": {
-              "type": "string",
-              "description": "Merchant identifier (optional)"
+        ],
+        "resources": [
+            {
+                "uri": "opal://controls",
+                "name": "Spend Controls",
+                "description": "Current spend control limits and parameters",
+                "mimeType": "application/json"
             }
-          },
-          "required": ["actor_id", "payment_method_id", "amount", "channel"]
-        }
-      },
-      {
-        "name": "getControlLimits",
-        "description": "Get current spend control limits and parameters",
-        "inputSchema": {
-          "type": "object",
-          "properties": {},
-          "required": []
-        }
-      }
-    ],
-    "resources": [
-      {
-        "uri": "opal://controls",
-        "name": "Spend Controls",
-        "description": "Current spend control limits and parameters",
-        "mimeType": "application/json"
-      }
-    ]
-  },
-  "server": {
-    "type": "stdio",
-    "command": "python",
-    "args": ["-m", "opal.mcp.server"]
-  },
-  "metadata": {
-    "author": "OCN Team",
-    "license": "MIT",
-    "homepage": "https://github.com/ocn-ai/opal",
-    "repository": "https://github.com/ocn-ai/opal.git"
-  }
+        ]
+    },
+    "server": {
+        "type": "stdio",
+        "command": "python",
+        "args": [
+            "-m",
+            "opal.mcp.server"
+        ]
+    },
+    "metadata": {
+        "author": "OCN Team",
+        "license": "MIT",
+        "homepage": "https://github.com/ocn-ai/opal",
+        "repository": "https://github.com/ocn-ai/opal.git"
+    }
 }

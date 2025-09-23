@@ -123,9 +123,9 @@ async def handle_list_payment_methods(arguments: Dict[str, Any]) -> CallToolResu
     """Handle listPaymentMethods tool call."""
     try:
         actor_id = arguments["actor_id"]
-        
+
         methods = SpendControls.get_available_payment_methods(actor_id)
-        
+
         # Format response
         methods_list = []
         for method in methods:
@@ -139,14 +139,14 @@ async def handle_list_payment_methods(arguments: Dict[str, Any]) -> CallToolResu
                 "status": method.status,
                 "metadata": method.metadata
             })
-        
+
         return CallToolResult(
             content=[TextContent(
                 type="text",
                 text=f"Available Payment Methods for {actor_id}:\n{json.dumps(methods_list, indent=2)}"
             )]
         )
-        
+
     except KeyError as e:
         return CallToolResult(
             content=[TextContent(type="text", text=f"Missing required argument: {e}")],
@@ -170,7 +170,7 @@ async def handle_select_payment_method(arguments: Dict[str, Any]) -> CallToolRes
         mcc = arguments.get("mcc")
         channel = arguments["channel"]
         merchant_id = arguments.get("merchant_id")
-        
+
         # Create transaction request
         transaction_request = TransactionRequest(
             amount=amount,
@@ -181,11 +181,11 @@ async def handle_select_payment_method(arguments: Dict[str, Any]) -> CallToolRes
             actor_id=actor_id,
             payment_method_id=payment_method_id
         )
-        
+
         # Get available payment methods to validate selection
         available_methods = SpendControls.get_available_payment_methods(actor_id)
         method_ids = [method.method_id for method in available_methods]
-        
+
         if payment_method_id not in method_ids:
             return CallToolResult(
                 content=[TextContent(
@@ -194,10 +194,10 @@ async def handle_select_payment_method(arguments: Dict[str, Any]) -> CallToolRes
                 )],
                 isError=True
             )
-        
+
         # Evaluate against spend controls
         control_result = SpendControls.evaluate_transaction(transaction_request)
-        
+
         # Emit CloudEvent (optional)
         try:
             selected_method = next(method for method in available_methods if method.method_id == payment_method_id)
@@ -209,7 +209,7 @@ async def handle_select_payment_method(arguments: Dict[str, Any]) -> CallToolRes
             )
         except Exception as e:
             print(f"Warning: Failed to emit method selected event: {e}")
-        
+
         # Format response
         result = {
             "allowed": control_result.allowed,
@@ -219,14 +219,14 @@ async def handle_select_payment_method(arguments: Dict[str, Any]) -> CallToolRes
             "max_amount_allowed": float(control_result.max_amount_allowed) if control_result.max_amount_allowed else None,
             "control_version": control_result.control_version
         }
-        
+
         return CallToolResult(
             content=[TextContent(
                 type="text",
                 text=f"Payment Method Selection Result:\n{json.dumps(result, indent=2)}"
             )]
         )
-        
+
     except KeyError as e:
         return CallToolResult(
             content=[TextContent(type="text", text=f"Missing required argument: {e}")],
@@ -243,14 +243,14 @@ async def handle_get_control_limits() -> CallToolResult:
     """Handle getControlLimits tool call."""
     try:
         limits = SpendControls.get_control_limits()
-        
+
         return CallToolResult(
             content=[TextContent(
                 type="text",
                 text=f"Current Spend Control Limits:\n{json.dumps(limits, indent=2)}"
             )]
         )
-        
+
     except Exception as e:
         return CallToolResult(
             content=[TextContent(type="text", text=f"Error getting control limits: {str(e)}")],
@@ -279,7 +279,7 @@ async def handle_read_resource(uri: str) -> ReadResourceResult:
         try:
             limits = SpendControls.get_control_limits()
             content = json.dumps(limits, indent=2)
-            
+
             return ReadResourceResult(
                 contents=[TextContent(type="text", text=content)]
             )

@@ -1,8 +1,38 @@
-.venv/
-__pycache__/
+# Byte-code files
 *.pyc
-.dist/
+__pycache__/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# OS generated files
+.localized
+.Trashes
+
+# Logs and data
+*.log
+*.sqlite3
+*.db
+
+# Environment variables
 .env
 .env.*
-.DS_Store

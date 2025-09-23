@@ -1,6 +1,6 @@
 # CODEOWNERS file for Opal
 # This file defines who should review changes to specific parts of the codebase
-# 
+#
 # For more information about CODEOWNERS files, see:
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
@@ -10,7 +10,7 @@
 # Source code ownership
 /src/            @ahsanazmi1
 
-# Test code ownership  
+# Test code ownership
 /tests/          @ahsanazmi1
 
 # GitHub configuration ownership
@@ -22,3 +22,4 @@
 # Project configuration files ownership
 pyproject.toml   @ahsanazmi1
 README.md        @ahsanazmi1
+
