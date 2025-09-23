@@ -1,0 +1,88 @@
+name: Security Validation
+
+on:
+  pull_request:
+  push:
+    branches: [main, phase-1-foundations]
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  python-security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -U pip
+          pip install -e .[dev]
+          pip install pip-audit
+
+      - name: Run pip-audit for known vulnerabilities
+        run: |
+          echo "🔒 Running pip-audit for known vulnerabilities..."
+          pip-audit --format=json --output=pip-audit-report.json || true
+          if [ -f pip-audit-report.json ] && grep -q '"severity": "CRITICAL"' pip-audit-report.json; then
+            echo "::error::Critical vulnerabilities found by pip-audit!"
+            exit 1
+          elif [ -f pip-audit-report.json ] && grep -q '"severity": "HIGH"' pip-audit-report.json; then
+            echo "::warning::High severity vulnerabilities found by pip-audit."
+          else
+            echo "✅ No critical or high severity vulnerabilities found by pip-audit."
+          fi
+
+      - name: Upload pip-audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+          retention-days: 30
+
+  container-security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for Dockerfile
+        id: check_dockerfile
+        run: |
+          if [ -f "Dockerfile" ]; then
+            echo "dockerfile_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "dockerfile_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Trivy filesystem scan
+        if: steps.check_dockerfile.outputs.dockerfile_exists == 'true'
+        run: |
+          echo "🔍 Running Trivy filesystem scan..."
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.50.1 # Install Trivy
+          trivy fs --format json --output trivy-fs-report.json . || true
+          if [ -f trivy-fs-report.json ] && grep -q '"Severity": "CRITICAL"' trivy-fs-report.json; then
+            echo "::error::Critical vulnerabilities found by Trivy filesystem scan!"
+            exit 1
+          elif [ -f trivy-fs-report.json ] && grep -q '"Severity": "HIGH"' trivy-fs-report.json; then
+            echo "::warning::High severity vulnerabilities found by Trivy filesystem scan."
+          else
+            echo "✅ No critical or high severity vulnerabilities found by Trivy filesystem scan."
+          fi
+
+      - name: Upload Trivy filesystem report
+        uses: actions/upload-artifact@v4
+        if: always() && steps.check_dockerfile.outputs.dockerfile_exists == 'true'
+        with:
+          name: trivy-fs-report
+          path: trivy-fs-report.json
+          retention-days: 30

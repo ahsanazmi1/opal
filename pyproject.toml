@@ -21,3 +21,13 @@ line-length = 100
 
 [tool.black]
 line-length = 100
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Allow untyped defs for now
+exclude = [
+    "src/opal/mcp/",  # Exclude the existing MCP server directory that uses external MCP package
+    "tests/"  # Exclude test files from strict typing
+]

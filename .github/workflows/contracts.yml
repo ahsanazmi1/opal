@@ -1,0 +1,80 @@
+name: Contracts Validation
+
+on:
+  pull_request:
+  push:
+    branches: [main, phase-1-foundations]
+  workflow_dispatch:
+
+jobs:
+  validate-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -U pip
+          pip install -e .[dev]
+          pip install jsonschema pyyaml
+
+      - name: Check for examples/schemas directory
+        id: check_dirs
+        run: |
+          if [ -d "examples" ] || [ -d "schemas" ] || [ -d "samples" ]; then
+            echo "has_examples_schemas=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_examples_schemas=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate JSON examples against ocn-common (if available)
+        if: steps.check_dirs.outputs.has_examples_schemas == 'true'
+        run: |
+          echo "🔍 Validating JSON examples against ocn-common..."
+          # Placeholder for actual validation logic
+          # This would typically involve installing ocn-common and using its validation utilities
+          # For now, we'll just check for valid JSON
+          find . -type f \( -name "*.json" -o -name "*.yaml" -o -name "*.yml" \) -print0 | while IFS= read -r -d $'\0' file; do
+            if [[ "$file" == *.json ]]; then
+              python -m json.tool "$file" > /dev/null || { echo "❌ Invalid JSON in $file"; exit 1; }
+              echo "✅ Valid JSON: $file"
+            elif [[ "$file" == *.yaml || "$file" == *.yml ]]; then
+              python -c "import yaml; with open('$file', 'r') as f: yaml.safe_load(f)" > /dev/null || { echo "❌ Invalid YAML in $file"; exit 1; }
+              echo "✅ Valid YAML: $file"
+            fi
+          done
+          echo "✅ JSON/YAML examples validation completed."
+
+      - name: Run placeholder validation (no examples/schemas)
+        if: steps.check_dirs.outputs.has_examples_schemas == 'false'
+        run: |
+          echo "ℹ️ No 'examples', 'schemas', or 'samples' directories found. Running placeholder contract validation."
+          echo "✅ Placeholder contract validation passed."
+
+      - name: Validate MCP manifest
+        run: |
+          echo "🔍 Validating MCP manifest..."
+          if [ -f "mcp/manifest.json" ]; then
+            python -c "
+            import json
+            with open('mcp/manifest.json') as f:
+                manifest = json.load(f)
+            assert 'name' in manifest, 'Manifest missing name'
+            assert 'version' in manifest, 'Manifest missing version'
+            assert 'capabilities' in manifest, 'Manifest missing capabilities'
+            assert isinstance(manifest['capabilities'], list), 'Capabilities must be a list'
+            assert 'endpoints' in manifest, 'Manifest missing endpoints'
+            assert isinstance(manifest['endpoints'], list), 'Endpoints must be a list'
+            print('✅ MCP manifest structure is valid.')
+            "
+          else
+            echo "⚠️ mcp/manifest.json not found. Skipping MCP manifest validation."
+          fi

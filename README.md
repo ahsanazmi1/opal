@@ -1,5 +1,7 @@
 # Opal — The Open Payment Agent
 
+[![Contracts Validation](https://github.com/ocn-ai/opal/actions/workflows/contracts.yml/badge.svg)](https://github.com/ocn-ai/opal/actions/workflows/contracts.yml)
+[![Security Validation](https://github.com/ocn-ai/opal/actions/workflows/security.yml/badge.svg)](https://github.com/ocn-ai/opal/actions/workflows/security.yml)
 [![CI](https://github.com/ocn-ai/opal/actions/workflows/ci.yml/badge.svg)](https://github.com/ocn-ai/opal/actions/workflows/ci.yml)
 
 **Opal** is the **open, transparent payment agent** for the [Open Checkout Network (OCN)](https://github.com/ocn-ai/ocn-common).

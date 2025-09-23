@@ -117,7 +117,7 @@ class TestPaymentMethodSelection:
             "currency": "USD",
             "mcc": "5411",  # Grocery stores - low risk
             "channel": "web",
-            "merchant_id": "merchant_123"
+            "merchant_id": "merchant_123",
         }
 
         response = client.post("/wallet/select", json=request_data)
@@ -147,7 +147,7 @@ class TestPaymentMethodSelection:
             "currency": "USD",
             "mcc": "5999",  # Miscellaneous retail - high risk
             "channel": "web",
-            "merchant_id": "merchant_123"
+            "merchant_id": "merchant_123",
         }
 
         response = client.post("/wallet/select", json=request_data)
@@ -174,7 +174,7 @@ class TestPaymentMethodSelection:
             "amount": 6000.0,  # Exceeds web channel limit
             "currency": "USD",
             "channel": "web",  # Web limit is $5000
-            "merchant_id": "merchant_123"
+            "merchant_id": "merchant_123",
         }
 
         response = client.post("/wallet/select", json=request_data)
@@ -192,7 +192,7 @@ class TestPaymentMethodSelection:
             "payment_method_id": "nonexistent_method",
             "amount": 50.0,
             "currency": "USD",
-            "channel": "web"
+            "channel": "web",
         }
 
         response = client.post("/wallet/select", json=request_data)
@@ -225,7 +225,7 @@ class TestPaymentMethodSelection:
             "payment_method_id": method_id,
             "amount": -10.0,  # Invalid negative amount
             "currency": "USD",
-            "channel": "web"
+            "channel": "web",
         }
 
         response = client.post("/wallet/select", json=request_data)
@@ -246,7 +246,7 @@ class TestPaymentMethodSelection:
             "payment_method_id": method_id,
             "amount": 2500.0,  # Within mobile limit
             "currency": "USD",
-            "channel": "mobile"
+            "channel": "mobile",
         }
 
         response = client.post("/wallet/select", json=request_data)
@@ -280,7 +280,7 @@ class TestPaymentMethodSelection:
             "amount": 100.0,
             "currency": "USD",
             "mcc": "5411",
-            "channel": "web"
+            "channel": "web",
         }
 
         # Make the same request twice

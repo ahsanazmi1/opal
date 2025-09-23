@@ -21,7 +21,7 @@ class TestPaymentMethod:
             expiry_month=12,
             expiry_year=2025,
             status="active",
-            metadata={"card_type": "credit"}
+            metadata={"card_type": "credit"},
         )
 
         assert method.method_id == "pm_123_visa_001"
@@ -45,7 +45,7 @@ class TestTransactionRequest:
             channel="web",
             merchant_id="merchant_123",
             actor_id="user_456",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         assert request.amount == Decimal("100.00")
@@ -65,7 +65,7 @@ class TestTransactionRequest:
                 currency="USD",
                 channel="web",
                 actor_id="user_123",
-                payment_method_id="pm_123"
+                payment_method_id="pm_123",
             )
 
 
@@ -80,7 +80,7 @@ class TestSpendControls:
             mcc="5411",  # Grocery stores - low risk
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result = SpendControls.evaluate_transaction(request)
@@ -100,7 +100,7 @@ class TestSpendControls:
             mcc="5999",  # Miscellaneous retail - high risk, $100 limit
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result = SpendControls.evaluate_transaction(request)
@@ -116,7 +116,7 @@ class TestSpendControls:
             currency="USD",
             channel="web",  # Web limit is $5000
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result = SpendControls.evaluate_transaction(request)
@@ -133,7 +133,7 @@ class TestSpendControls:
             mcc=None,  # No MCC restrictions
             channel="pos",  # POS limit is $10000
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result = SpendControls.evaluate_transaction(request)
@@ -149,7 +149,7 @@ class TestSpendControls:
             mcc="5411",
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         request2 = TransactionRequest(
@@ -158,7 +158,7 @@ class TestSpendControls:
             mcc="5411",
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result1 = SpendControls.evaluate_transaction(request1)
@@ -174,7 +174,7 @@ class TestSpendControls:
             mcc="5411",
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         request2 = TransactionRequest(
@@ -183,7 +183,7 @@ class TestSpendControls:
             mcc="5411",
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result1 = SpendControls.evaluate_transaction(request1)
@@ -199,7 +199,7 @@ class TestSpendControls:
             mcc="5411",  # Grocery stores
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result = SpendControls.evaluate_transaction(request)
@@ -259,7 +259,7 @@ class TestSpendControls:
             mcc="7995",  # Gambling - restricted to $50
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result = SpendControls.evaluate_transaction(request)
@@ -281,7 +281,7 @@ class TestSpendControls:
             mcc="5812",  # Restaurants - $300 limit
             channel="web",
             actor_id="user_123",
-            payment_method_id="pm_123_visa_001"
+            payment_method_id="pm_123_visa_001",
         )
 
         result = SpendControls.evaluate_transaction(request)

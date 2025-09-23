@@ -7,18 +7,20 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
-from .controls import SpendControls, TransactionRequest, PaymentMethod, SpendControlResult
+from .controls import SpendControls, TransactionRequest
 from .events import emit_method_selected_event
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+# Add the project root to the path to import our simplified MCP server
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mcp.server import router as mcp_router
 
 
 app = FastAPI(
     title="Opal Wallet Agent",
     description="Open Wallet Agent providing payment method selection and spend controls",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 # Include MCP router
@@ -83,8 +85,8 @@ async def root():
             "wallet_methods": "/wallet/methods",
             "wallet_select": "/wallet/select",
             "controls": "/controls/limits",
-            "health": "/health"
-        }
+            "health": "/health",
+        },
     }
 
 
@@ -124,7 +126,7 @@ async def list_payment_methods(actor_id: str):
                 expiry_month=method.expiry_month,
                 expiry_year=method.expiry_year,
                 status=method.status,
-                metadata=method.metadata
+                metadata=method.metadata,
             )
             for method in methods
         ]
@@ -132,11 +134,13 @@ async def list_payment_methods(actor_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error retrieving payment methods: {str(e)}"
+            detail=f"Error retrieving payment methods: {str(e)}",
         )
 
 
-@app.post("/wallet/select", response_model=SelectPaymentMethodResponse, status_code=status.HTTP_200_OK)
+@app.post(
+    "/wallet/select", response_model=SelectPaymentMethodResponse, status_code=status.HTTP_200_OK
+)
 async def select_payment_method(request: SelectPaymentMethodRequest):
     """
     Select a payment method and evaluate against spend controls.
@@ -156,7 +160,7 @@ async def select_payment_method(request: SelectPaymentMethodRequest):
             channel=request.channel,
             merchant_id=request.merchant_id,
             actor_id=request.actor_id,
-            payment_method_id=request.payment_method_id
+            payment_method_id=request.payment_method_id,
         )
 
         # Get available payment methods to validate selection
@@ -166,7 +170,7 @@ async def select_payment_method(request: SelectPaymentMethodRequest):
         if request.payment_method_id not in method_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Payment method {request.payment_method_id} not available for actor {request.actor_id}"
+                detail=f"Payment method {request.payment_method_id} not available for actor {request.actor_id}",
             )
 
         # Evaluate against spend controls
@@ -178,18 +182,26 @@ async def select_payment_method(request: SelectPaymentMethodRequest):
             token_reference=control_result.token_reference,
             reasons=control_result.reasons,
             limits_applied=control_result.limits_applied,
-            max_amount_allowed=float(control_result.max_amount_allowed) if control_result.max_amount_allowed else None,
-            control_version=control_result.control_version
+            max_amount_allowed=(
+                float(control_result.max_amount_allowed)
+                if control_result.max_amount_allowed
+                else None
+            ),
+            control_version=control_result.control_version,
         )
 
         # Emit CloudEvent for method selection (optional)
         try:
-            selected_method = next(method for method in available_methods if method.method_id == request.payment_method_id)
+            selected_method = next(
+                method
+                for method in available_methods
+                if method.method_id == request.payment_method_id
+            )
             await emit_method_selected_event(
                 actor_id=request.actor_id,
                 payment_method=selected_method,
                 transaction_request=transaction_request,
-                control_result=control_result
+                control_result=control_result,
             )
         except Exception as e:
             # Don't fail the request if event emission fails
@@ -202,7 +214,7 @@ async def select_payment_method(request: SelectPaymentMethodRequest):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing payment method selection: {str(e)}"
+            detail=f"Error processing payment method selection: {str(e)}",
         )
 
 
@@ -225,7 +237,7 @@ async def get_payment_method(actor_id: str, method_id: str):
         if not method:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Payment method {method_id} not found for actor {actor_id}"
+                detail=f"Payment method {method_id} not found for actor {actor_id}",
             )
 
         return PaymentMethodResponse(
@@ -236,7 +248,7 @@ async def get_payment_method(actor_id: str, method_id: str):
             expiry_month=method.expiry_month,
             expiry_year=method.expiry_year,
             status=method.status,
-            metadata=method.metadata
+            metadata=method.metadata,
         )
 
     except HTTPException:
@@ -244,16 +256,11 @@ async def get_payment_method(actor_id: str, method_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error retrieving payment method: {str(e)}"
+            detail=f"Error retrieving payment method: {str(e)}",
         )
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(
-        "opal.api:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+    uvicorn.run("opal.api:app", host="0.0.0.0", port=8000, reload=True)  # nosec B104

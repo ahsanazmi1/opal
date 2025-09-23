@@ -4,16 +4,21 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+
 class MCPRequest(BaseModel):
     """MCP request model."""
+
     verb: str
     args: Dict[str, Any] = {}
 
+
 class MCPResponse(BaseModel):
     """MCP response model."""
+
     ok: bool
     data: Any = None
     error: Any = None
+
 
 @router.post("/mcp/invoke", response_model=MCPResponse)
 async def invoke_mcp_verb(request: MCPRequest) -> MCPResponse:
@@ -42,7 +47,7 @@ async def invoke_mcp_verb(request: MCPRequest) -> MCPResponse:
                             "expiry_month": 12,
                             "expiry_year": 2025,
                             "status": "active",
-                            "description": "Visa Credit Card ending in 1234"
+                            "description": "Visa Credit Card ending in 1234",
                         },
                         {
                             "method_id": "pm_stub_debit_5678",
@@ -52,7 +57,7 @@ async def invoke_mcp_verb(request: MCPRequest) -> MCPResponse:
                             "expiry_month": 6,
                             "expiry_year": 2026,
                             "status": "active",
-                            "description": "Mastercard Debit Card ending in 5678"
+                            "description": "Mastercard Debit Card ending in 5678",
                         },
                         {
                             "method_id": "pm_stub_wallet_9999",
@@ -62,11 +67,11 @@ async def invoke_mcp_verb(request: MCPRequest) -> MCPResponse:
                             "expiry_month": None,
                             "expiry_year": None,
                             "status": "active",
-                            "description": "PayPal Digital Wallet"
-                        }
+                            "description": "PayPal Digital Wallet",
+                        },
                     ],
-                    "description": "Deterministic stub payment methods for testing"
-                }
+                    "description": "Deterministic stub payment methods for testing",
+                },
             )
         else:
             return MCPResponse(ok=False, error=f"Unsupported verb: {request.verb}")

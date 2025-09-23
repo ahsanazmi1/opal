@@ -3,7 +3,7 @@ Deterministic spend controls for Opal wallet operations.
 """
 
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from pydantic import BaseModel, Field
 
@@ -53,12 +53,10 @@ class SpendControls:
         "5999": {"max_amount": Decimal("100"), "description": "Miscellaneous retail - high risk"},
         "7995": {"max_amount": Decimal("50"), "description": "Gambling - restricted"},
         "7994": {"max_amount": Decimal("50"), "description": "Video game arcades - restricted"},
-
         # Medium-risk categories
         "5814": {"max_amount": Decimal("500"), "description": "Fast food restaurants"},
         "5812": {"max_amount": Decimal("300"), "description": "Restaurants"},
         "5541": {"max_amount": Decimal("200"), "description": "Gas stations"},
-
         # Low-risk categories - higher limits
         "5411": {"max_amount": Decimal("2000"), "description": "Grocery stores"},
         "5310": {"max_amount": Decimal("1500"), "description": "Discount stores"},
@@ -107,27 +105,37 @@ class SpendControls:
 
         # Check MCC limits
         if request.mcc and request.mcc in cls.MCC_LIMITS:
-            mcc_limit = cls.MCC_LIMITS[request.mcc]["max_amount"]
+            mcc_limit: Decimal = cast(Decimal, cls.MCC_LIMITS[request.mcc]["max_amount"])
             max_amount_allowed = min(max_amount_allowed, mcc_limit)
             limits_applied.append(f"MCC {request.mcc} limit: ${mcc_limit}")
 
             if request.amount > mcc_limit:
-                reasons.append(f"Amount ${request.amount} exceeds MCC {request.mcc} limit of ${mcc_limit}")
+                reasons.append(
+                    f"Amount ${request.amount} exceeds MCC {request.mcc} limit of ${mcc_limit}"
+                )
                 return cls._create_denied_result(request, reasons, limits_applied)
             else:
-                reasons.append(f"Amount ${request.amount} within MCC {request.mcc} limit of ${mcc_limit}")
+                reasons.append(
+                    f"Amount ${request.amount} within MCC {request.mcc} limit of ${mcc_limit}"
+                )
 
         # Check channel limits
         if request.channel in cls.CHANNEL_LIMITS:
-            channel_limit = cls.CHANNEL_LIMITS[request.channel]["max_amount"]
+            channel_limit: Decimal = cast(
+                Decimal, cls.CHANNEL_LIMITS[request.channel]["max_amount"]
+            )
             max_amount_allowed = min(max_amount_allowed, channel_limit)
             limits_applied.append(f"Channel {request.channel} limit: ${channel_limit}")
 
             if request.amount > channel_limit:
-                reasons.append(f"Amount ${request.amount} exceeds {request.channel} channel limit of ${channel_limit}")
+                reasons.append(
+                    f"Amount ${request.amount} exceeds {request.channel} channel limit of ${channel_limit}"
+                )
                 return cls._create_denied_result(request, reasons, limits_applied)
             else:
-                reasons.append(f"Amount ${request.amount} within {request.channel} channel limit of ${channel_limit}")
+                reasons.append(
+                    f"Amount ${request.amount} within {request.channel} channel limit of ${channel_limit}"
+                )
 
         # Check daily limits (simplified - in production would check actual usage)
         if request.channel in cls.DAILY_LIMITS:
@@ -148,7 +156,7 @@ class SpendControls:
             reasons=reasons,
             limits_applied=limits_applied,
             max_amount_allowed=max_amount_allowed,
-            control_version="v1.0.0"
+            control_version="v1.0.0",
         )
 
     @classmethod
@@ -160,7 +168,9 @@ class SpendControls:
         return f"tok_{request.actor_id}_{abs(token_hash)}"
 
     @classmethod
-    def _create_denied_result(cls, request: TransactionRequest, reasons: List[str], limits_applied: List[str]) -> SpendControlResult:
+    def _create_denied_result(
+        cls, request: TransactionRequest, reasons: List[str], limits_applied: List[str]
+    ) -> SpendControlResult:
         """Create a denied spend control result."""
         return SpendControlResult(
             allowed=False,
@@ -168,7 +178,7 @@ class SpendControls:
             reasons=reasons,
             limits_applied=limits_applied,
             max_amount_allowed=None,
-            control_version="v1.0.0"
+            control_version="v1.0.0",
         )
 
     @classmethod
@@ -192,7 +202,7 @@ class SpendControls:
                 expiry_month=12,
                 expiry_year=2025,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa"}
+                metadata={"card_type": "credit", "network": "visa"},
             ),
             PaymentMethod(
                 method_id=f"pm_{actor_id}_mc_002",
@@ -202,7 +212,7 @@ class SpendControls:
                 expiry_month=10,
                 expiry_year=2026,
                 status="active",
-                metadata={"card_type": "debit", "network": "mastercard"}
+                metadata={"card_type": "debit", "network": "mastercard"},
             ),
             PaymentMethod(
                 method_id=f"pm_{actor_id}_bank_003",
@@ -210,7 +220,7 @@ class SpendControls:
                 provider="chase",
                 last_four="1234",
                 status="active",
-                metadata={"account_type": "checking", "routing": "021000021"}
+                metadata={"account_type": "checking", "routing": "021000021"},
             ),
             PaymentMethod(
                 method_id=f"pm_{actor_id}_wallet_004",
@@ -218,39 +228,39 @@ class SpendControls:
                 provider="paypal",
                 last_four="5678",
                 status="active",
-                metadata={"wallet_type": "paypal", "verified": "true"}
-            )
+                metadata={"wallet_type": "paypal", "verified": "true"},
+            ),
         ]
 
         return methods
 
     @classmethod
-    def get_control_limits(cls) -> Dict[str, any]:
+    def get_control_limits(cls) -> Dict[str, Any]:
         """Get current control limits and parameters."""
         return {
             "control_version": "v1.0.0",
             "mcc_limits": {
                 mcc: {
-                    "max_amount": float(limits["max_amount"]),
-                    "description": limits["description"]
+                    "max_amount": float(cast(Decimal, limits["max_amount"])),
+                    "description": limits["description"],
                 }
                 for mcc, limits in cls.MCC_LIMITS.items()
             },
             "channel_limits": {
                 channel: {
-                    "max_amount": float(limits["max_amount"]),
-                    "description": limits["description"]
+                    "max_amount": float(cast(Decimal, limits["max_amount"])),
+                    "description": limits["description"],
                 }
                 for channel, limits in cls.CHANNEL_LIMITS.items()
             },
             "daily_limits": {
-                channel: float(limit) for channel, limit in cls.DAILY_LIMITS.items()
+                channel: float(cast(Decimal, limit)) for channel, limit in cls.DAILY_LIMITS.items()
             },
             "method_limits": {
                 method: {
-                    "max_amount": float(limits["max_amount"]),
-                    "description": limits["description"]
+                    "max_amount": float(cast(Decimal, limits["max_amount"])),
+                    "description": limits["description"],
                 }
                 for method, limits in cls.METHOD_LIMITS.items()
-            }
+            },
         }
