@@ -2,6 +2,7 @@
 FastAPI service for Opal wallet operations.
 """
 
+from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, status
@@ -154,7 +155,7 @@ async def select_payment_method(request: SelectPaymentMethodRequest):
     try:
         # Create transaction request
         transaction_request = TransactionRequest(
-            amount=request.amount,
+            amount=Decimal(str(request.amount)),
             currency=request.currency,
             mcc=request.mcc,
             channel=request.channel,
@@ -263,4 +264,9 @@ async def get_payment_method(actor_id: str, method_id: str):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("opal.api:app", host="0.0.0.0", port=8000, reload=True)  # nosec B104
+    uvicorn.run(
+        "opal.api:app",
+        host="127.0.0.1",  # Use localhost for development security
+        port=8000,
+        reload=True,
+    )
