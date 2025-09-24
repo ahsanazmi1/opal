@@ -63,18 +63,18 @@ jobs:
         run: |
           echo "🔍 Validating MCP manifest..."
           if [ -f "mcp/manifest.json" ]; then
-            python -c "
-            import json
-            with open('mcp/manifest.json') as f:
-                manifest = json.load(f)
-            assert 'name' in manifest, 'Manifest missing name'
-            assert 'version' in manifest, 'Manifest missing version'
-            assert 'capabilities' in manifest, 'Manifest missing capabilities'
-            assert isinstance(manifest['capabilities'], list), 'Capabilities must be a list'
-            assert 'endpoints' in manifest, 'Manifest missing endpoints'
-            assert isinstance(manifest['endpoints'], list), 'Endpoints must be a list'
-            print('✅ MCP manifest structure is valid.')
-            "
+            python3 << 'EOF'
+          import json
+          with open('mcp/manifest.json') as f:
+              manifest = json.load(f)
+          assert 'name' in manifest, 'Manifest missing name'
+          assert 'version' in manifest, 'Manifest missing version'
+          assert 'capabilities' in manifest, 'Manifest missing capabilities'
+          assert isinstance(manifest['capabilities'], list), 'Capabilities must be a list'
+          assert 'endpoints' in manifest, 'Manifest missing endpoints'
+          assert isinstance(manifest['endpoints'], list), 'Endpoints must be a list'
+          print('✅ MCP manifest structure is valid.')
+          EOF
           else
             echo "⚠️ mcp/manifest.json not found. Skipping MCP manifest validation."
           fi
