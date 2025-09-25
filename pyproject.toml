@@ -1,6 +1,6 @@
 [project]
 name = "opal"
-version = "0.1.0"
+version = "0.2.0"
 description = "OCN opal"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -10,7 +10,8 @@ dependencies = [
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.5.0",
     "python-multipart>=0.0.6",
-    "httpx>=0.24.0"
+    "httpx>=0.24.0",
+    "ocn-common @ git+https://github.com/ahsanazmi1/ocn-common.git@v0.2.0#egg=ocn-common"
 ]
 
 [project.optional-dependencies]
