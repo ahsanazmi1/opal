@@ -21,6 +21,8 @@ from .controls import (
     RewardType
 )
 from .events import emit_consumer_explanation_event
+from .ml.value_scoring import score_consumer_instrument_value
+from .llm.explain import explain_consumer_instrument_choice, is_consumer_llm_configured
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -242,6 +244,282 @@ def generate_consumer_explanation(
     explanation_parts.append(f"Countering merchant's {merchant_proposal.rail_type} proposal")
     
     return ". ".join(explanation_parts) + "."
+
+
+async def negotiateWalletChoice(
+    actor_id: str,
+    transaction_amount: float,
+    available_instruments: List[ConsumerInstrument],
+    merchant_proposal: MerchantProposal,
+    consumer_preferences: Dict[str, Any] = None,
+    currency: str = "USD",
+    merchant_id: Optional[str] = None,
+    mcc: Optional[str] = None,
+    channel: str = "online",
+    deterministic_seed: int = 42
+) -> CounterNegotiationResponse:
+    """
+    Enhanced consumer wallet choice negotiation with ML value scoring.
+    
+    This function implements the core negotiateWalletChoice logic:
+    - ML-powered value scoring for each instrument
+    - Maximize rewards while minimizing out-of-pocket costs
+    - Deterministic selection with loyalty boost scenarios
+    - LLM-powered explanations for instrument selection
+    
+    Args:
+        actor_id: Consumer actor identifier
+        transaction_amount: Transaction amount
+        available_instruments: List of available consumer instruments
+        merchant_proposal: Merchant's rail proposal from Orca
+        consumer_preferences: Consumer preferences and constraints
+        currency: Transaction currency
+        merchant_id: Merchant identifier
+        mcc: Merchant Category Code
+        channel: Transaction channel
+        deterministic_seed: Seed for deterministic results
+        
+    Returns:
+        CounterNegotiationResponse with selected instrument and explanation
+    """
+    import random
+    import numpy as np
+    
+    # Set deterministic seed for consistent results
+    random.seed(deterministic_seed)
+    np.random.seed(deterministic_seed)
+    
+    logger.info(
+        f"Starting enhanced wallet choice negotiation for actor {actor_id}",
+        extra={
+            "actor_id": actor_id,
+            "transaction_amount": transaction_amount,
+            "available_instruments": len(available_instruments),
+            "merchant_rail": merchant_proposal.rail_type,
+            "deterministic_seed": deterministic_seed,
+        }
+    )
+    
+    # Create transaction context
+    transaction_context = {
+        "transaction_amount": transaction_amount,
+        "currency": currency,
+        "merchant_id": merchant_id,
+        "mcc": mcc,
+        "channel": channel,
+        "deterministic_seed": deterministic_seed,
+    }
+    
+    # 1. ML-powered value scoring for all instruments
+    ml_value_scores = {}
+    evaluated_instruments = []
+    
+    for instrument in available_instruments:
+        try:
+            # Calculate ML value score
+            ml_result = score_consumer_instrument_value(
+                rewards_rate=max([r.rate for r in instrument.rewards], default=0.0),
+                fee_rate=instrument.base_fee,
+                loyalty_bonus=instrument.loyalty_multiplier,
+                card_tier=1 if instrument.loyalty_tier == "standard" else 2 if instrument.loyalty_tier == "premium" else 3,
+                transaction_amount=transaction_amount,
+                net_reward_value=instrument.net_value,
+                annual_fee=0.0,  # Could be added to instrument model
+                merchant_category=mcc or "general",
+                channel=channel
+            )
+            
+            ml_value_scores[instrument.instrument_id] = ml_result.value_score
+            
+            # Update instrument with ML score
+            instrument.value_score = ml_result.value_score
+            instrument.selection_factors.extend([
+                f"ml_value_score_{ml_result.value_score:.3f}",
+                f"model_{ml_result.model_type}",
+            ])
+            
+            evaluated_instruments.append(instrument)
+            
+            logger.debug(
+                f"ML scored instrument {instrument.instrument_id}: {ml_result.value_score:.3f}",
+                extra={
+                    "instrument_id": instrument.instrument_id,
+                    "instrument_type": instrument.instrument_type,
+                    "ml_value_score": ml_result.value_score,
+                    "model_type": ml_result.model_type,
+                }
+            )
+            
+        except Exception as e:
+            logger.warning(f"Failed to score instrument {instrument.instrument_id}: {e}")
+            # Use fallback deterministic scoring
+            ml_value_scores[instrument.instrument_id] = instrument.value_score
+            evaluated_instruments.append(instrument)
+    
+    # 2. Filter eligible instruments (sufficient balance, etc.)
+    eligible_instruments = []
+    rejected_instruments = []
+    
+    for instrument in evaluated_instruments:
+        # Check eligibility criteria
+        if instrument.available_balance < transaction_amount:
+            instrument.eligible = False
+            instrument.exclusion_reasons.append("insufficient_balance")
+            rejected_instruments.append(instrument)
+        else:
+            eligible_instruments.append(instrument)
+    
+    if not eligible_instruments:
+        logger.warning(f"No eligible instruments for actor {actor_id}")
+        if evaluated_instruments:
+            # Select the best available (even if over limit)
+            selected_instrument = max(evaluated_instruments, key=lambda x: x.value_score)
+            selected_instrument.selection_factors.append("no_eligible_alternatives")
+        else:
+            raise ValueError("No available instruments for negotiation")
+    else:
+        # 3. Select best-value instrument using ML scores
+        # Primary: ML value score, Secondary: net value, Tertiary: reward value
+        selected_instrument = max(
+            eligible_instruments, 
+            key=lambda x: (x.value_score, x.net_value, x.total_reward_value)
+        )
+        selected_instrument.selection_factors.append("highest_ml_value_score")
+    
+    # 4. Generate enhanced explanation using LLM
+    explanation = ""
+    if is_consumer_llm_configured():
+        try:
+            # Prepare data for LLM explanation
+            selected_data = {
+                "instrument_id": selected_instrument.instrument_id,
+                "instrument_type": selected_instrument.instrument_type,
+                "provider": selected_instrument.provider,
+                "total_reward_value": selected_instrument.total_reward_value,
+                "out_of_pocket_cost": selected_instrument.out_of_pocket_cost,
+                "net_value": selected_instrument.net_value,
+                "value_score": selected_instrument.value_score,
+                "loyalty_tier": selected_instrument.loyalty_tier,
+                "loyalty_multiplier": selected_instrument.loyalty_multiplier,
+                "rewards": [{"rate": r.rate, "value": r.value, "type": r.reward_type} for r in selected_instrument.rewards] if selected_instrument.rewards else [],
+            }
+            
+            rejected_data = [
+                {
+                    "instrument_id": inst.instrument_id,
+                    "instrument_type": inst.instrument_type,
+                    "provider": inst.provider,
+                    "total_reward_value": inst.total_reward_value,
+                    "out_of_pocket_cost": inst.out_of_pocket_cost,
+                    "net_value": inst.net_value,
+                    "value_score": inst.value_score,
+                    "exclusion_reasons": inst.exclusion_reasons,
+                }
+                for inst in rejected_instruments[:3]  # Top 3 rejected
+            ]
+            
+            merchant_data = {
+                "rail_type": merchant_proposal.rail_type,
+                "merchant_cost": merchant_proposal.merchant_cost,
+                "settlement_days": merchant_proposal.settlement_days,
+                "risk_score": merchant_proposal.risk_score,
+                "explanation": merchant_proposal.explanation,
+                "trace_id": merchant_proposal.trace_id,
+            }
+            
+            # Generate LLM explanation
+            llm_response = explain_consumer_instrument_choice(
+                selected_instrument=selected_data,
+                rejected_instruments=rejected_data,
+                merchant_proposal=merchant_data,
+                consumer_preferences=consumer_preferences or {},
+                transaction_context=transaction_context,
+                ml_value_scores=ml_value_scores
+            )
+            
+            if llm_response:
+                explanation = llm_response.explanation
+                # Add structured analysis to selection factors
+                if llm_response.key_factors:
+                    selected_instrument.selection_factors.extend(llm_response.key_factors)
+            else:
+                explanation = generate_consumer_explanation(selected_instrument, rejected_instruments, merchant_proposal, None)
+                
+        except Exception as e:
+            logger.error(f"LLM explanation failed: {e}")
+            explanation = generate_consumer_explanation(selected_instrument, rejected_instruments, merchant_proposal, None)
+    else:
+        explanation = generate_consumer_explanation(selected_instrument, rejected_instruments, merchant_proposal, None)
+    
+    # 5. Create counter-proposal
+    counter_proposal = {
+        "proposed_instrument_type": selected_instrument.instrument_type,
+        "proposed_instrument_id": selected_instrument.instrument_id,
+        "consumer_net_value": selected_instrument.net_value,
+        "total_reward_value": selected_instrument.total_reward_value,
+        "out_of_pocket_cost": selected_instrument.out_of_pocket_cost,
+        "ml_value_score": selected_instrument.value_score,
+        "merchant_impact_estimate": {
+            "estimated_fee_bps": selected_instrument.base_fee,
+            "estimated_settlement_days": 1 if selected_instrument.instrument_type in ["credit_card", "debit_card", "wallet"] else 2,
+        },
+        "explanation_summary": f"Consumer prefers {selected_instrument.instrument_type} with ML value score {selected_instrument.value_score:.3f}",
+    }
+    
+    # 6. Calculate win-win metrics
+    merchant_savings = max(0.0, merchant_proposal.merchant_cost - selected_instrument.base_fee)
+    consumer_value = selected_instrument.net_value
+    
+    # Enhanced win-win score with ML confidence
+    normalized_consumer_value = min(1.0, (consumer_value / transaction_amount) * 10)
+    normalized_merchant_savings = min(1.0, (merchant_savings / merchant_proposal.merchant_cost) * 10) if merchant_proposal.merchant_cost > 0 else 0
+    ml_confidence_bonus = max(ml_value_scores.values()) if ml_value_scores else 0.5
+    
+    win_win_score = (normalized_consumer_value * 0.5) + (normalized_merchant_savings * 0.3) + (ml_confidence_bonus * 0.2)
+    win_win_score = min(1.0, max(0.0, win_win_score))
+    
+    # 7. Create response
+    response = CounterNegotiationResponse(
+        selected_instrument=selected_instrument,
+        counter_proposal=counter_proposal,
+        explanation=explanation,
+        trace_id=merchant_proposal.trace_id,
+        timestamp=datetime.now(),
+        negotiation_metadata={
+            "negotiation_type": "enhanced_wallet_choice",
+            "ml_value_scoring": True,
+            "deterministic_seed": deterministic_seed,
+            "merchant_proposal_rail": merchant_proposal.rail_type,
+            "consumer_instruments_evaluated": len(evaluated_instruments),
+            "eligible_instruments_count": len(eligible_instruments),
+            "ml_value_scores": ml_value_scores,
+            "llm_explanation": is_consumer_llm_configured(),
+        },
+        rejected_instruments=rejected_instruments,
+        merchant_savings=merchant_savings,
+        consumer_value=consumer_value,
+        win_win_score=win_win_score,
+    )
+    
+    # 8. Emit CloudEvent
+    try:
+        await emit_consumer_explanation_event(response, actor_id)
+    except Exception as e:
+        logger.error(f"Failed to emit consumer explanation event: {e}")
+    
+    logger.info(
+        f"Enhanced wallet choice negotiation completed",
+        extra={
+            "trace_id": merchant_proposal.trace_id,
+            "selected_instrument": selected_instrument.instrument_type,
+            "ml_value_score": selected_instrument.value_score,
+            "consumer_value": consumer_value,
+            "win_win_score": win_win_score,
+            "llm_explanation": is_consumer_llm_configured(),
+        }
+    )
+    
+    return response
 
 
 async def counter_negotiation(request: CounterNegotiationRequest) -> CounterNegotiationResponse:

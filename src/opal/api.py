@@ -8,9 +8,9 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
-from .controls import SpendControls, TransactionRequest, CounterNegotiationRequest, CounterNegotiationResponse
+from .controls import SpendControls, TransactionRequest, CounterNegotiationRequest, CounterNegotiationResponse, ConsumerInstrument, MerchantProposal
 from .events import emit_method_selected_event
-from .negotiation import counter_negotiation
+from .negotiation import counter_negotiation, negotiateWalletChoice
 import sys
 import os
 
@@ -263,6 +263,69 @@ async def get_payment_method(actor_id: str, method_id: str):
 
 
 # Phase 3 - Consumer Counter-Negotiation Endpoints
+
+@app.post("/negotiate-wallet-choice", response_model=CounterNegotiationResponse)
+async def negotiate_wallet_choice(
+    actor_id: str,
+    transaction_amount: float,
+    available_instruments: List[ConsumerInstrument],
+    merchant_proposal: MerchantProposal,
+    consumer_preferences: Optional[Dict[str, Any]] = None,
+    currency: str = "USD",
+    merchant_id: Optional[str] = None,
+    mcc: Optional[str] = None,
+    channel: str = "online",
+    deterministic_seed: int = 42
+) -> CounterNegotiationResponse:
+    """
+    Enhanced consumer wallet choice negotiation with ML value scoring.
+    
+    This endpoint implements the core negotiateWalletChoice logic:
+    - ML-powered value scoring for each instrument using XGBoost/calibrated logistic
+    - Maximize rewards while minimizing out-of-pocket costs
+    - Deterministic selection with loyalty boost scenarios
+    - LLM-powered explanations for instrument selection
+    - Emits CloudEvents for consumer explanation (ocn.opal.explanation.v1)
+    
+    Args:
+        actor_id: Consumer actor identifier
+        transaction_amount: Transaction amount
+        available_instruments: List of available consumer instruments
+        merchant_proposal: Merchant's rail proposal from Orca
+        consumer_preferences: Consumer preferences and constraints
+        currency: Transaction currency
+        merchant_id: Merchant identifier
+        mcc: Merchant Category Code
+        channel: Transaction channel
+        deterministic_seed: Seed for deterministic results
+    """
+    try:
+        response = await negotiateWalletChoice(
+            actor_id=actor_id,
+            transaction_amount=transaction_amount,
+            available_instruments=available_instruments,
+            merchant_proposal=merchant_proposal,
+            consumer_preferences=consumer_preferences,
+            currency=currency,
+            merchant_id=merchant_id,
+            mcc=mcc,
+            channel=channel,
+            deterministic_seed=deterministic_seed
+        )
+        
+        return response
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Wallet choice negotiation validation error: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Wallet choice negotiation failed: {str(e)}",
+        )
+
 
 @app.post("/counter-negotiate", response_model=CounterNegotiationResponse)
 async def counter_negotiate(request: CounterNegotiationRequest) -> CounterNegotiationResponse:
