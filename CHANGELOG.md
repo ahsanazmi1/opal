@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.3.0 — Phase 3: Negotiation & Live Fee Bidding
+- New branch: phase-3-bidding
+- Prep for negotiation, bidding, policy DSL, and processor connectors
+- README updated with Phase 3 checklist
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 

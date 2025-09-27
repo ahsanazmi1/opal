@@ -50,6 +50,15 @@ make run
 - `make run` - Start FastAPI app with uvicorn
 - `make clean` - Remove virtual environment and cache files
 
+## Phase 3 — Negotiation & Live Fee Bidding
+
+Adds consumer-side counter (rewards/loyalty) + rationale.
+
+### Phase 3 — Negotiation & Live Fee Bidding
+- [ ] Counters merchant proposal with best-value instrument (rewards + out-of-pocket)
+- [ ] Emits explanation for consumer instrument choice (ocn.opal.explanation.v1)
+- [ ] Tests for consumer preference negotiation flows
+
 ## Related OCN Repositories
 
 - [Orca](https://github.com/ocn-ai/orca): The Open Checkout Agent
