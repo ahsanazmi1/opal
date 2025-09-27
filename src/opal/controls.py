@@ -3,7 +3,8 @@ Deterministic spend controls for Opal wallet operations.
 """
 
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast, Literal
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -268,3 +269,107 @@ class SpendControls:
                 for method, limits in cls.METHOD_LIMITS.items()
             },
         }
+
+
+# Phase 3 - Consumer Counter-Negotiation Models
+
+# Define valid instrument types for consumer negotiation
+InstrumentType = Literal["credit_card", "debit_card", "bnpl", "wallet", "bank_transfer", "rewards_card"]
+
+# Define valid reward types
+RewardType = Literal["cashback", "points", "miles", "loyalty_points", "discount"]
+
+class ConsumerReward(BaseModel):
+    """Consumer reward information for an instrument."""
+    
+    reward_type: RewardType = Field(..., description="Type of reward")
+    rate: float = Field(..., description="Reward rate (e.g., 0.02 for 2% cashback)", ge=0.0, le=1.0)
+    value: float = Field(..., description="Reward value in transaction currency", ge=0.0)
+    category_bonus: Optional[Dict[str, float]] = Field(None, description="Category-specific bonus rates")
+    cap: Optional[float] = Field(None, description="Maximum reward per transaction")
+    description: str = Field(..., description="Human-readable reward description")
+
+
+class ConsumerInstrument(BaseModel):
+    """Consumer payment instrument for counter-negotiation."""
+    
+    instrument_id: str = Field(..., description="Unique instrument identifier")
+    instrument_type: InstrumentType = Field(..., description="Type of payment instrument")
+    provider: str = Field(..., description="Payment provider name")
+    last_four: str = Field(..., description="Last four digits")
+    
+    # Cost and value metrics
+    base_fee: float = Field(..., description="Base processing fee in basis points", ge=0.0)
+    out_of_pocket_cost: float = Field(..., description="Out-of-pocket cost to consumer", ge=0.0)
+    available_balance: float = Field(..., description="Available balance/credit limit", ge=0.0)
+    
+    # Rewards and loyalty
+    rewards: List[ConsumerReward] = Field(default_factory=list, description="Available rewards")
+    total_reward_value: float = Field(..., description="Total reward value for this transaction", ge=0.0)
+    loyalty_tier: Optional[str] = Field(None, description="Loyalty tier (gold, platinum, etc.)")
+    loyalty_multiplier: float = Field(default=1.0, description="Loyalty tier multiplier", ge=0.0, le=5.0)
+    
+    # Net value calculation
+    net_value: float = Field(..., description="Net value to consumer (rewards - out-of-pocket)", ge=-1000.0, le=1000.0)
+    value_score: float = Field(..., description="Normalized value score (0.0-1.0)", ge=0.0, le=1.0)
+    
+    # Eligibility and preferences
+    eligible: bool = Field(..., description="Whether instrument is eligible for this transaction")
+    preference_score: float = Field(default=0.5, description="Consumer preference score", ge=0.0, le=1.0)
+    
+    # Explanation data
+    selection_factors: List[str] = Field(default_factory=list, description="Factors favoring this instrument")
+    exclusion_reasons: List[str] = Field(default_factory=list, description="Reasons this instrument was not selected")
+
+
+class MerchantProposal(BaseModel):
+    """Merchant rail proposal from Orca."""
+    
+    rail_type: str = Field(..., description="Proposed payment rail (ACH, Debit, Credit)")
+    merchant_cost: float = Field(..., description="Merchant processing cost in basis points")
+    settlement_days: int = Field(..., description="Days to settlement", ge=0)
+    risk_score: float = Field(..., description="Risk score for this rail", ge=0.0, le=1.0)
+    explanation: str = Field(..., description="Merchant explanation for rail selection")
+    trace_id: str = Field(..., description="Transaction trace ID")
+
+
+class CounterNegotiationRequest(BaseModel):
+    """Request for consumer counter-negotiation."""
+    
+    actor_id: str = Field(..., description="Consumer actor ID")
+    transaction_amount: float = Field(..., gt=0, description="Transaction amount")
+    currency: str = Field(default="USD", description="Transaction currency")
+    merchant_id: Optional[str] = Field(None, description="Merchant identifier")
+    mcc: Optional[str] = Field(None, description="Merchant Category Code")
+    channel: str = Field(default="online", description="Transaction channel")
+    
+    # Merchant proposal to counter
+    merchant_proposal: MerchantProposal = Field(..., description="Merchant rail proposal")
+    
+    # Consumer context
+    available_instruments: List[ConsumerInstrument] = Field(..., description="Available consumer instruments")
+    consumer_preferences: Dict[str, Any] = Field(default_factory=dict, description="Consumer preferences")
+    
+    # Negotiation parameters
+    reward_weight: float = Field(default=0.5, description="Weight for reward optimization", ge=0.0, le=1.0)
+    cost_weight: float = Field(default=0.3, description="Weight for cost minimization", ge=0.0, le=1.0)
+    preference_weight: float = Field(default=0.2, description="Weight for consumer preferences", ge=0.0, le=1.0)
+
+
+class CounterNegotiationResponse(BaseModel):
+    """Response from consumer counter-negotiation."""
+    
+    selected_instrument: ConsumerInstrument = Field(..., description="Selected consumer instrument")
+    counter_proposal: Dict[str, Any] = Field(..., description="Consumer counter-proposal")
+    explanation: str = Field(..., description="Explanation for instrument selection")
+    trace_id: str = Field(..., description="Transaction trace ID")
+    timestamp: datetime = Field(..., description="Negotiation timestamp")
+    
+    # Negotiation metadata
+    negotiation_metadata: Dict[str, Any] = Field(default_factory=dict, description="Negotiation metadata")
+    rejected_instruments: List[ConsumerInstrument] = Field(default_factory=list, description="Rejected instruments")
+    
+    # Value analysis
+    merchant_savings: float = Field(..., description="Potential merchant cost savings")
+    consumer_value: float = Field(..., description="Net value to consumer")
+    win_win_score: float = Field(..., description="Overall win-win score", ge=0.0, le=1.0)

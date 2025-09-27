@@ -8,8 +8,9 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
-from .controls import SpendControls, TransactionRequest
+from .controls import SpendControls, TransactionRequest, CounterNegotiationRequest, CounterNegotiationResponse
 from .events import emit_method_selected_event
+from .negotiation import counter_negotiation
 import sys
 import os
 
@@ -259,6 +260,87 @@ async def get_payment_method(actor_id: str, method_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving payment method: {str(e)}",
         )
+
+
+# Phase 3 - Consumer Counter-Negotiation Endpoints
+
+@app.post("/counter-negotiate", response_model=CounterNegotiationResponse)
+async def counter_negotiate(request: CounterNegotiationRequest) -> CounterNegotiationResponse:
+    """
+    Perform consumer counter-negotiation against merchant proposal.
+    
+    This endpoint implements Phase 3 consumer counter-negotiation logic:
+    - Evaluates available consumer instruments (credit cards, BNPL, debit, etc.)
+    - Considers rewards, loyalty tiers, and out-of-pocket costs
+    - Emits CloudEvents for consumer explanation (ocn.opal.explanation.v1)
+    - Returns optimal consumer instrument to counter merchant proposal
+    """
+    try:
+        # Perform counter-negotiation
+        response = await counter_negotiation(request)
+        
+        return response
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Counter-negotiation validation error: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Counter-negotiation failed: {str(e)}",
+        )
+
+
+@app.get("/negotiation/status")
+async def get_negotiation_status() -> Dict[str, Any]:
+    """
+    Get consumer counter-negotiation service status and capabilities.
+    """
+    return {
+        "service": "opal-counter-negotiation",
+        "version": "0.3.0",
+        "status": "operational",
+        "phase": "Phase 3 - Consumer Counter-Negotiation",
+        "capabilities": {
+            "consumer_instrument_evaluation": True,
+            "reward_optimization": True,
+            "loyalty_tier_integration": True,
+            "out_of_pocket_calculation": True,
+            "cloudevents_emission": True,
+        },
+        "supported_instruments": [
+            "credit_card", "debit_card", "bnpl", "wallet", "bank_transfer", "rewards_card"
+        ],
+        "default_weights": {
+            "reward_weight": 0.5,
+            "cost_weight": 0.3,
+            "preference_weight": 0.2,
+        },
+        "sample_instruments": {
+            "credit_card": "2% cashback with Gold loyalty tier",
+            "bnpl": "1% discount with flexible payment terms",
+            "debit_card": "0.5% cashback with instant settlement",
+        }
+    }
+
+
+@app.get("/negotiation/sample-instruments")
+async def get_sample_instruments() -> Dict[str, Any]:
+    """
+    Get sample consumer instruments for testing counter-negotiation.
+    """
+    from .negotiation import create_sample_credit_card, create_sample_bnpl, create_sample_debit_card
+    
+    return {
+        "sample_instruments": [
+            create_sample_credit_card().dict(),
+            create_sample_bnpl().dict(),
+            create_sample_debit_card().dict(),
+        ],
+        "usage": "Use these sample instruments in counter-negotiation requests for testing"
+    }
 
 
 if __name__ == "__main__":

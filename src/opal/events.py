@@ -2,13 +2,14 @@
 CloudEvents emitter for Opal payment method selections.
 """
 
+import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel
 
-from .controls import PaymentMethod, TransactionRequest, SpendControlResult
+from .controls import PaymentMethod, TransactionRequest, SpendControlResult, CounterNegotiationResponse, ConsumerInstrument
 
 
 class MethodSelectedEvent(BaseModel):
@@ -110,6 +111,174 @@ async def emit_method_selected_event(
     # For now, we'll just log it
     print(f"Method Selected Event: {event.model_dump_json()}")
 
+    return event
+
+
+# Phase 3 - Consumer Counter-Negotiation CloudEvents
+
+class ConsumerExplanationEvent(BaseModel):
+    """CloudEvent for consumer counter-negotiation explanations."""
+    
+    specversion: str = "1.0"
+    id: str
+    source: str
+    type: str = "ocn.opal.explanation.v1"
+    subject: Optional[str] = None
+    time: str
+    datacontenttype: str = "application/json"
+    dataschema: Optional[str] = None
+    data: Dict[str, Any]
+
+
+class ConsumerExplanationData(BaseModel):
+    """Data payload for consumer explanation events."""
+    
+    actor_id: str
+    selected_instrument: Dict[str, Any]
+    counter_proposal: Dict[str, Any]
+    explanation: str
+    negotiation_metadata: Dict[str, Any]
+    timestamp: str
+
+
+async def emit_consumer_explanation_event(
+    negotiation_response: CounterNegotiationResponse,
+    actor_id: str,
+    source: str = "https://opal.ocn.ai/negotiation"
+) -> ConsumerExplanationEvent:
+    """
+    Emit a CloudEvent for consumer counter-negotiation explanation.
+    
+    Args:
+        negotiation_response: Response from counter-negotiation
+        actor_id: Consumer actor identifier
+        source: Event source URI
+        
+    Returns:
+        ConsumerExplanationEvent
+    """
+    event_id = str(uuid4())
+    timestamp = datetime.now(timezone.utc).isoformat()
+    
+    # Create event data payload
+    event_data = ConsumerExplanationData(
+        actor_id=actor_id,
+        selected_instrument={
+            "instrument_id": negotiation_response.selected_instrument.instrument_id,
+            "instrument_type": negotiation_response.selected_instrument.instrument_type,
+            "provider": negotiation_response.selected_instrument.provider,
+            "last_four": negotiation_response.selected_instrument.last_four,
+            "total_reward_value": negotiation_response.selected_instrument.total_reward_value,
+            "out_of_pocket_cost": negotiation_response.selected_instrument.out_of_pocket_cost,
+            "net_value": negotiation_response.selected_instrument.net_value,
+            "value_score": negotiation_response.selected_instrument.value_score,
+            "loyalty_tier": negotiation_response.selected_instrument.loyalty_tier,
+            "loyalty_multiplier": negotiation_response.selected_instrument.loyalty_multiplier,
+            "selection_factors": negotiation_response.selected_instrument.selection_factors,
+        },
+        counter_proposal=negotiation_response.counter_proposal,
+        explanation=negotiation_response.explanation,
+        negotiation_metadata=negotiation_response.negotiation_metadata,
+        timestamp=negotiation_response.timestamp.isoformat(),
+    )
+    
+    # Create CloudEvent
+    event = ConsumerExplanationEvent(
+        id=event_id,
+        source=source,
+        subject=f"actor_{actor_id}",
+        time=timestamp,
+        dataschema="https://schemas.ocn.ai/events/v1/opal.explanation.v1.schema.json",
+        data=event_data.dict(),
+    )
+    
+    # Log the event
+    logging.info(
+        f"Emitted consumer explanation CloudEvent",
+        extra={
+            "event_id": event_id,
+            "actor_id": actor_id,
+            "selected_instrument": negotiation_response.selected_instrument.instrument_type,
+            "consumer_value": negotiation_response.consumer_value,
+            "event_type": "ocn.opal.explanation.v1"
+        }
+    )
+    
+    return event
+
+
+async def emit_counter_negotiation_event(
+    negotiation_response: CounterNegotiationResponse,
+    actor_id: str,
+    source: str = "https://opal.ocn.ai/negotiation"
+) -> ConsumerExplanationEvent:
+    """
+    Emit a CloudEvent for counter-negotiation decision.
+    
+    Args:
+        negotiation_response: Response from counter-negotiation
+        actor_id: Consumer actor identifier
+        source: Event source URI
+        
+    Returns:
+        ConsumerExplanationEvent with counter-negotiation details
+    """
+    event_id = str(uuid4())
+    timestamp = datetime.now(timezone.utc).isoformat()
+    
+    # Create detailed event data
+    event_data = ConsumerExplanationData(
+        actor_id=actor_id,
+        selected_instrument={
+            "instrument_id": negotiation_response.selected_instrument.instrument_id,
+            "instrument_type": negotiation_response.selected_instrument.instrument_type,
+            "provider": negotiation_response.selected_instrument.provider,
+            "last_four": negotiation_response.selected_instrument.last_four,
+            "base_fee": negotiation_response.selected_instrument.base_fee,
+            "total_reward_value": negotiation_response.selected_instrument.total_reward_value,
+            "out_of_pocket_cost": negotiation_response.selected_instrument.out_of_pocket_cost,
+            "net_value": negotiation_response.selected_instrument.net_value,
+            "value_score": negotiation_response.selected_instrument.value_score,
+            "loyalty_tier": negotiation_response.selected_instrument.loyalty_tier,
+            "loyalty_multiplier": negotiation_response.selected_instrument.loyalty_multiplier,
+            "selection_factors": negotiation_response.selected_instrument.selection_factors,
+            "exclusion_reasons": negotiation_response.selected_instrument.exclusion_reasons,
+        },
+        counter_proposal=negotiation_response.counter_proposal,
+        explanation=negotiation_response.explanation,
+        negotiation_metadata={
+            **negotiation_response.negotiation_metadata,
+            "merchant_savings": negotiation_response.merchant_savings,
+            "consumer_value": negotiation_response.consumer_value,
+            "win_win_score": negotiation_response.win_win_score,
+            "rejected_instruments_count": len(negotiation_response.rejected_instruments),
+        },
+        timestamp=negotiation_response.timestamp.isoformat(),
+    )
+    
+    # Create CloudEvent with counter-negotiation type
+    event = ConsumerExplanationEvent(
+        id=event_id,
+        source=source,
+        subject=f"actor_{actor_id}",
+        time=timestamp,
+        type="ocn.opal.counter_negotiation.v1",
+        dataschema="https://schemas.ocn.ai/events/v1/opal.counter_negotiation.v1.schema.json",
+        data=event_data.dict(),
+    )
+    
+    # Log the event
+    logging.info(
+        f"Emitted counter-negotiation CloudEvent",
+        extra={
+            "event_id": event_id,
+            "actor_id": actor_id,
+            "selected_instrument": negotiation_response.selected_instrument.instrument_type,
+            "win_win_score": negotiation_response.win_win_score,
+            "event_type": "ocn.opal.counter_negotiation.v1"
+        }
+    )
+    
     return event
 
 
