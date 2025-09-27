@@ -55,9 +55,9 @@ make run
 Adds consumer-side counter (rewards/loyalty) + rationale.
 
 ### Phase 3 — Negotiation & Live Fee Bidding
-- [ ] Counters merchant proposal with best-value instrument (rewards + out-of-pocket)
-- [ ] Emits explanation for consumer instrument choice (ocn.opal.explanation.v1)
-- [ ] Tests for consumer preference negotiation flows
+- [x] Counters merchant proposal with best-value instrument (rewards + out-of-pocket)
+- [x] Emits explanation for consumer instrument choice (ocn.opal.explanation.v1)
+- [x] Tests for consumer preference negotiation flows
 
 ## Related OCN Repositories
 
