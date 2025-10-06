@@ -8,13 +8,21 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
-from .controls import SpendControls, TransactionRequest, CounterNegotiationRequest, CounterNegotiationResponse, ConsumerInstrument, MerchantProposal
+from .controls import (
+    SpendControls,
+    TransactionRequest,
+    CounterNegotiationRequest,
+    CounterNegotiationResponse,
+    ConsumerInstrument,
+    MerchantProposal,
+)
 from .events import emit_method_selected_event
-from .negotiation import counter_negotiation, negotiateWalletChoice, enhanced_counter_negotiation_with_rail_evaluation
+from .negotiation import negotiateWalletChoice, enhanced_counter_negotiation_with_rail_evaluation
 
 # Import ML-enhanced controls
 try:
     from .ml_enhanced_controls import ml_enhanced_controls
+
     ML_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ ML models not available: {e}")
@@ -279,6 +287,7 @@ async def get_payment_method(actor_id: str, method_id: str):
 
 # Phase 3 - Consumer Counter-Negotiation Endpoints
 
+
 @app.post("/negotiate-wallet-choice", response_model=CounterNegotiationResponse)
 async def negotiate_wallet_choice(
     actor_id: str,
@@ -290,18 +299,18 @@ async def negotiate_wallet_choice(
     merchant_id: Optional[str] = None,
     mcc: Optional[str] = None,
     channel: str = "online",
-    deterministic_seed: int = 42
+    deterministic_seed: int = 42,
 ) -> CounterNegotiationResponse:
     """
     Enhanced consumer wallet choice negotiation with ML value scoring.
-    
+
     This endpoint implements the core negotiateWalletChoice logic:
     - ML-powered value scoring for each instrument using XGBoost/calibrated logistic
     - Maximize rewards while minimizing out-of-pocket costs
     - Deterministic selection with loyalty boost scenarios
     - LLM-powered explanations for instrument selection
     - Emits CloudEvents for consumer explanation (ocn.opal.explanation.v1)
-    
+
     Args:
         actor_id: Consumer actor identifier
         transaction_amount: Transaction amount
@@ -325,11 +334,11 @@ async def negotiate_wallet_choice(
             merchant_id=merchant_id,
             mcc=mcc,
             channel=channel,
-            deterministic_seed=deterministic_seed
+            deterministic_seed=deterministic_seed,
         )
-        
+
         return response
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -346,7 +355,7 @@ async def negotiate_wallet_choice(
 async def counter_negotiate(request: CounterNegotiationRequest) -> CounterNegotiationResponse:
     """
     Perform consumer counter-negotiation against merchant proposal.
-    
+
     This endpoint implements Phase 3 consumer counter-negotiation logic:
     - Evaluates available consumer instruments (credit cards, BNPL, debit, etc.)
     - Considers rewards, loyalty tiers, and out-of-pocket costs
@@ -356,9 +365,9 @@ async def counter_negotiate(request: CounterNegotiationRequest) -> CounterNegoti
     try:
         # Perform enhanced counter-negotiation with rail evaluation
         response = await enhanced_counter_negotiation_with_rail_evaluation(request)
-        
+
         return response
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -389,7 +398,12 @@ async def get_negotiation_status() -> Dict[str, Any]:
             "cloudevents_emission": True,
         },
         "supported_instruments": [
-            "credit_card", "debit_card", "bnpl", "wallet", "bank_transfer", "rewards_card"
+            "credit_card",
+            "debit_card",
+            "bnpl",
+            "wallet",
+            "bank_transfer",
+            "rewards_card",
         ],
         "default_weights": {
             "reward_weight": 0.5,
@@ -400,7 +414,7 @@ async def get_negotiation_status() -> Dict[str, Any]:
             "credit_card": "2% cashback with Gold loyalty tier",
             "bnpl": "1% discount with flexible payment terms",
             "debit_card": "0.5% cashback with instant settlement",
-        }
+        },
     }
 
 
@@ -409,8 +423,13 @@ async def get_sample_instruments() -> Dict[str, Any]:
     """
     Get sample consumer instruments for testing counter-negotiation.
     """
-    from .negotiation import create_sample_credit_card, create_sample_bnpl, create_sample_debit_card, create_sample_stablecoin_wallet
-    
+    from .negotiation import (
+        create_sample_credit_card,
+        create_sample_bnpl,
+        create_sample_debit_card,
+        create_sample_stablecoin_wallet,
+    )
+
     return {
         "sample_instruments": [
             create_sample_credit_card().dict(),
@@ -418,7 +437,7 @@ async def get_sample_instruments() -> Dict[str, Any]:
             create_sample_debit_card().dict(),
             create_sample_stablecoin_wallet().dict(),
         ],
-        "usage": "Use these sample instruments in counter-negotiation requests for testing"
+        "usage": "Use these sample instruments in counter-negotiation requests for testing",
     }
 
 
@@ -426,18 +445,15 @@ async def get_sample_instruments() -> Dict[str, Any]:
 async def get_ml_status():
     """Get ML model status and configuration."""
     if not ML_AVAILABLE:
-        return {
-            "ml_enabled": False,
-            "error": "ML models not available"
-        }
-    
+        return {"ml_enabled": False, "error": "ML models not available"}
+
     try:
         from .ml.fraud_detection import get_fraud_model
         from .ml.value_scoring import get_value_scorer
-        
+
         fraud_model = get_fraud_model()
         value_scorer = get_value_scorer()
-        
+
         return {
             "ml_enabled": ml_enhanced_controls.use_ml,
             "ml_weight": ml_enhanced_controls.ml_weight,
@@ -447,15 +463,17 @@ async def get_ml_status():
                     "model_type": fraud_model.metadata.get("model_type", "unknown"),
                     "version": fraud_model.metadata.get("version", "unknown"),
                     "training_date": fraud_model.metadata.get("trained_on", "unknown"),
-                    "features": len(fraud_model.feature_names) if fraud_model.feature_names else 0
+                    "features": len(fraud_model.feature_names) if fraud_model.feature_names else 0,
                 },
                 "value_scoring": {
                     "loaded": value_scorer.model is not None,
                     "model_type": value_scorer.model_type,
                     "version": value_scorer.model_version,
-                    "features": len(value_scorer.feature_names) if value_scorer.feature_names else 0
-                }
-            }
+                    "features": (
+                        len(value_scorer.feature_names) if value_scorer.feature_names else 0
+                    ),
+                },
+            },
         }
     except Exception as e:
         raise HTTPException(

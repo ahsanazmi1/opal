@@ -9,7 +9,12 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-from .controls import PaymentMethod, TransactionRequest, SpendControlResult, CounterNegotiationResponse, ConsumerInstrument
+from .controls import (
+    PaymentMethod,
+    TransactionRequest,
+    SpendControlResult,
+    CounterNegotiationResponse,
+)
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -119,9 +124,10 @@ async def emit_method_selected_event(
 
 # Phase 3 - Consumer Counter-Negotiation CloudEvents
 
+
 class ConsumerExplanationEvent(BaseModel):
     """CloudEvent for consumer counter-negotiation explanations."""
-    
+
     specversion: str = "1.0"
     id: str
     source: str
@@ -135,7 +141,7 @@ class ConsumerExplanationEvent(BaseModel):
 
 class ConsumerExplanationData(BaseModel):
     """Data payload for consumer explanation events."""
-    
+
     actor_id: str
     selected_instrument: Dict[str, Any]
     counter_proposal: Dict[str, Any]
@@ -147,22 +153,22 @@ class ConsumerExplanationData(BaseModel):
 async def emit_consumer_explanation_event(
     negotiation_response: CounterNegotiationResponse,
     actor_id: str,
-    source: str = "https://opal.ocn.ai/negotiation"
+    source: str = "https://opal.ocn.ai/negotiation",
 ) -> ConsumerExplanationEvent:
     """
     Emit a CloudEvent for consumer counter-negotiation explanation.
-    
+
     Args:
         negotiation_response: Response from counter-negotiation
         actor_id: Consumer actor identifier
         source: Event source URI
-        
+
     Returns:
         ConsumerExplanationEvent
     """
     event_id = str(uuid4())
     timestamp = datetime.now(timezone.utc).isoformat()
-    
+
     # Create event data payload
     event_data = ConsumerExplanationData(
         actor_id=actor_id,
@@ -184,7 +190,7 @@ async def emit_consumer_explanation_event(
         negotiation_metadata=negotiation_response.negotiation_metadata,
         timestamp=negotiation_response.timestamp.isoformat(),
     )
-    
+
     # Create CloudEvent
     event = ConsumerExplanationEvent(
         id=event_id,
@@ -194,41 +200,41 @@ async def emit_consumer_explanation_event(
         dataschema="https://schemas.ocn.ai/events/v1/opal.explanation.v1.schema.json",
         data=event_data.dict(),
     )
-    
+
     # Log the event
     logging.info(
-        f"Emitted consumer explanation CloudEvent",
+        "Emitted consumer explanation CloudEvent",
         extra={
             "event_id": event_id,
             "actor_id": actor_id,
             "selected_instrument": negotiation_response.consumer_proposal.instrument_type,
             "consumer_value": negotiation_response.consumer_proposal.consumer_benefit,
-            "event_type": "ocn.opal.explanation.v1"
-        }
+            "event_type": "ocn.opal.explanation.v1",
+        },
     )
-    
+
     return event
 
 
 async def emit_counter_negotiation_event(
     negotiation_response: CounterNegotiationResponse,
     actor_id: str,
-    source: str = "https://opal.ocn.ai/negotiation"
+    source: str = "https://opal.ocn.ai/negotiation",
 ) -> ConsumerExplanationEvent:
     """
     Emit a CloudEvent for counter-negotiation decision.
-    
+
     Args:
         negotiation_response: Response from counter-negotiation
         actor_id: Consumer actor identifier
         source: Event source URI
-        
+
     Returns:
         ConsumerExplanationEvent with counter-negotiation details
     """
     event_id = str(uuid4())
     timestamp = datetime.now(timezone.utc).isoformat()
-    
+
     # Create detailed event data
     event_data = ConsumerExplanationData(
         actor_id=actor_id,
@@ -258,7 +264,7 @@ async def emit_counter_negotiation_event(
         },
         timestamp=negotiation_response.timestamp.isoformat(),
     )
-    
+
     # Create CloudEvent with counter-negotiation type
     event = ConsumerExplanationEvent(
         id=event_id,
@@ -269,19 +275,19 @@ async def emit_counter_negotiation_event(
         dataschema="https://schemas.ocn.ai/events/v1/opal.counter_negotiation.v1.schema.json",
         data=event_data.dict(),
     )
-    
+
     # Log the event
     logging.info(
-        f"Emitted counter-negotiation CloudEvent",
+        "Emitted counter-negotiation CloudEvent",
         extra={
             "event_id": event_id,
             "actor_id": actor_id,
             "selected_instrument": negotiation_response.consumer_proposal.instrument_type,
             "win_win_score": negotiation_response.metadata.get("win_win_score", 0.5),
-            "event_type": "ocn.opal.counter_negotiation.v1"
-        }
+            "event_type": "ocn.opal.counter_negotiation.v1",
+        },
     )
-    
+
     return event
 
 
@@ -392,16 +398,16 @@ METHOD_SELECTED_EVENT_SCHEMA = {
 def emit_consumer_explanation_event(
     response: CounterNegotiationResponse,
     actor_id: str,
-    source: str = "https://opal.ocn.ai/consumer-explanation"
+    source: str = "https://opal.ocn.ai/consumer-explanation",
 ) -> Dict[str, Any]:
     """
     Emit a CloudEvent for consumer instrument choice explanation.
-    
+
     Args:
         response: Counter-negotiation response
         actor_id: Consumer actor ID
         source: Event source URI
-        
+
     Returns:
         Dict containing the CloudEvent data
     """
@@ -425,9 +431,11 @@ def emit_consumer_explanation_event(
                     "instrument_type": response.consumer_proposal.instrument_type,
                     "provider": response.consumer_proposal.instrument_type,
                     "net_value": response.consumer_proposal.consumer_benefit,
-                    "total_reward_value": response.consumer_rewards[0].value if response.consumer_rewards else 0,
+                    "total_reward_value": (
+                        response.consumer_rewards[0].value if response.consumer_rewards else 0
+                    ),
                     "value_score": response.consumer_proposal.convenience_score,
-                    "selection_factors": ["consumer_benefit", "convenience"]
+                    "selection_factors": ["consumer_benefit", "convenience"],
                 },
                 "explanation_result": {
                     "explanation": response.explanation,
@@ -435,25 +443,28 @@ def emit_consumer_explanation_event(
                     "merchant_savings": response.metadata.get("merchant_savings", 0),
                     "consumer_value": response.consumer_proposal.consumer_benefit,
                     "win_win_score": response.metadata.get("win_win_score", 0.5),
-                    "rejected_instruments_count": len(response.alternatives)
+                    "rejected_instruments_count": len(response.alternatives),
                 },
                 "negotiation_metadata": response.metadata,
-                "timestamp": response.metadata.get("timestamp", datetime.now().isoformat())
-            }
+                "timestamp": response.metadata.get("timestamp", datetime.now().isoformat()),
+            },
         }
-        
+
         # Log the event
         logger.info(f"Emitting consumer explanation event: {event_data['id']} for actor {actor_id}")
-        
+
         # In a real implementation, you would emit this to an event bus
         # For now, we'll just log it
         import os
         import json
+
         if os.getenv("OCN_EMIT_EVENTS", "false").lower() == "true":
-            logger.info(f"Consumer explanation event data: {json.dumps(event_data, indent=2, default=str)}")
-        
+            logger.info(
+                f"Consumer explanation event data: {json.dumps(event_data, indent=2, default=str)}"
+            )
+
         return event_data
-        
+
     except Exception as e:
         logger.error(f"Failed to emit consumer explanation event: {e}")
         return {}

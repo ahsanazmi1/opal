@@ -4,7 +4,6 @@ Deterministic spend controls for Opal wallet operations.
 
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, cast, Literal
-from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -204,7 +203,12 @@ class SpendControls:
                 expiry_month=8,
                 expiry_year=2027,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa", "card_name": "Chase Sapphire Preferred", "rewards": "2x_travel_dining"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "visa",
+                    "card_name": "Chase Sapphire Preferred",
+                    "rewards": "2x_travel_dining",
+                },
             ),
             # 2. Capital One Venture Rewards
             PaymentMethod(
@@ -215,7 +219,12 @@ class SpendControls:
                 expiry_month=11,
                 expiry_year=2026,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa", "card_name": "Capital One Venture Rewards", "rewards": "2x_all_purchases"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "visa",
+                    "card_name": "Capital One Venture Rewards",
+                    "rewards": "2x_all_purchases",
+                },
             ),
             # 3. American Express Gold Card
             PaymentMethod(
@@ -226,7 +235,12 @@ class SpendControls:
                 expiry_month=3,
                 expiry_year=2028,
                 status="active",
-                metadata={"card_type": "credit", "network": "amex", "card_name": "American Express Gold Card", "rewards": "4x_dining_groceries"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "amex",
+                    "card_name": "American Express Gold Card",
+                    "rewards": "4x_dining_groceries",
+                },
             ),
             # 4. Citi Double Cash
             PaymentMethod(
@@ -237,7 +251,12 @@ class SpendControls:
                 expiry_month=6,
                 expiry_year=2027,
                 status="active",
-                metadata={"card_type": "credit", "network": "mastercard", "card_name": "Citi Double Cash", "rewards": "2x_all_purchases"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "mastercard",
+                    "card_name": "Citi Double Cash",
+                    "rewards": "2x_all_purchases",
+                },
             ),
             # 5. Discover it Cash Back
             PaymentMethod(
@@ -248,7 +267,12 @@ class SpendControls:
                 expiry_month=9,
                 expiry_year=2026,
                 status="active",
-                metadata={"card_type": "credit", "network": "discover", "card_name": "Discover it Cash Back", "rewards": "5x_rotating_categories"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "discover",
+                    "card_name": "Discover it Cash Back",
+                    "rewards": "5x_rotating_categories",
+                },
             ),
             # 6. Wells Fargo Active Cash
             PaymentMethod(
@@ -259,7 +283,12 @@ class SpendControls:
                 expiry_month=12,
                 expiry_year=2025,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa", "card_name": "Wells Fargo Active Cash", "rewards": "2x_all_purchases"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "visa",
+                    "card_name": "Wells Fargo Active Cash",
+                    "rewards": "2x_all_purchases",
+                },
             ),
             # 7. Bank of America Customized Cash Rewards
             PaymentMethod(
@@ -270,7 +299,12 @@ class SpendControls:
                 expiry_month=4,
                 expiry_year=2027,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa", "card_name": "Bank of America Customized Cash", "rewards": "3x_category_choice"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "visa",
+                    "card_name": "Bank of America Customized Cash",
+                    "rewards": "3x_category_choice",
+                },
             ),
             # 8. Chase Freedom Unlimited
             PaymentMethod(
@@ -281,7 +315,12 @@ class SpendControls:
                 expiry_month=7,
                 expiry_year=2026,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa", "card_name": "Chase Freedom Unlimited", "rewards": "1.5x_all_purchases"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "visa",
+                    "card_name": "Chase Freedom Unlimited",
+                    "rewards": "1.5x_all_purchases",
+                },
             ),
             # 9. Capital One Quicksilver
             PaymentMethod(
@@ -292,7 +331,12 @@ class SpendControls:
                 expiry_month=2,
                 expiry_year=2028,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa", "card_name": "Capital One Quicksilver", "rewards": "1.5x_all_purchases"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "visa",
+                    "card_name": "Capital One Quicksilver",
+                    "rewards": "1.5x_all_purchases",
+                },
             ),
             # 10. Apple Card
             PaymentMethod(
@@ -303,7 +347,12 @@ class SpendControls:
                 expiry_month=10,
                 expiry_year=2027,
                 status="active",
-                metadata={"card_type": "credit", "network": "mastercard", "card_name": "Apple Card", "rewards": "2x_apple_pay_1x_physical"},
+                metadata={
+                    "card_type": "credit",
+                    "network": "mastercard",
+                    "card_name": "Apple Card",
+                    "rewards": "2x_apple_pay_1x_physical",
+                },
             ),
             # Stablecoin Wallet (USDC)
             PaymentMethod(
@@ -314,7 +363,12 @@ class SpendControls:
                 expiry_month=None,
                 expiry_year=None,
                 status="active",
-                metadata={"wallet_type": "stablecoin", "currency": "USDC", "balance": "5000.00", "verified": "true"},
+                metadata={
+                    "wallet_type": "stablecoin",
+                    "currency": "USDC",
+                    "balance": "5000.00",
+                    "verified": "true",
+                },
             ),
             # PayPal Digital Wallet
             PaymentMethod(
@@ -336,7 +390,11 @@ class SpendControls:
                 expiry_month=None,
                 expiry_year=None,
                 status="active",
-                metadata={"account_type": "checking", "routing": "021000021", "balance": "15000.00"},
+                metadata={
+                    "account_type": "checking",
+                    "routing": "021000021",
+                    "balance": "15000.00",
+                },
             ),
         ]
 
@@ -380,58 +438,94 @@ class SpendControls:
 # Define valid rail types - Extended for multi-rail support
 RailType = Literal["Card", "ACH", "RTP", "FedNow", "SEPA", "Wire", "Crypto"]
 
-InstrumentType = Literal["credit_card", "debit_card", "bnpl", "wallet", "bank_transfer", "rewards_card", "prepaid_card", "stablecoin", "digital_wallet"]
+InstrumentType = Literal[
+    "credit_card",
+    "debit_card",
+    "bnpl",
+    "wallet",
+    "bank_transfer",
+    "rewards_card",
+    "prepaid_card",
+    "stablecoin",
+    "digital_wallet",
+]
 
 # Define valid reward types
-RewardType = Literal["cashback", "points", "miles", "loyalty_points", "discount", "crypto_rewards", "bnpl_benefits", "cash_advance"]
+RewardType = Literal[
+    "cashback",
+    "points",
+    "miles",
+    "loyalty_points",
+    "discount",
+    "crypto_rewards",
+    "bnpl_benefits",
+    "cash_advance",
+]
+
 
 class ConsumerReward(BaseModel):
     """Consumer reward information for an instrument."""
-    
+
     reward_type: RewardType = Field(..., description="Type of reward")
     rate: float = Field(..., description="Reward rate (e.g., 0.02 for 2% cashback)", ge=0.0, le=1.0)
     value: float = Field(..., description="Reward value in transaction currency", ge=0.0)
-    category_bonus: Optional[Dict[str, float]] = Field(None, description="Category-specific bonus rates")
+    category_bonus: Optional[Dict[str, float]] = Field(
+        None, description="Category-specific bonus rates"
+    )
     cap: Optional[float] = Field(None, description="Maximum reward per transaction")
     description: str = Field(..., description="Human-readable reward description")
 
 
 class ConsumerInstrument(BaseModel):
     """Consumer payment instrument for counter-negotiation."""
-    
+
     instrument_id: str = Field(..., description="Unique instrument identifier")
     instrument_type: InstrumentType = Field(..., description="Type of payment instrument")
     provider: str = Field(..., description="Payment provider name")
     last_four: str = Field(..., description="Last four digits")
-    
+
     # Cost and value metrics
     base_fee: float = Field(..., description="Base processing fee in basis points", ge=0.0)
     out_of_pocket_cost: float = Field(..., description="Out-of-pocket cost to consumer", ge=0.0)
     available_balance: float = Field(..., description="Available balance/credit limit", ge=0.0)
-    
+
     # Rewards and loyalty
     rewards: List[ConsumerReward] = Field(default_factory=list, description="Available rewards")
-    total_reward_value: float = Field(..., description="Total reward value for this transaction", ge=0.0)
+    total_reward_value: float = Field(
+        ..., description="Total reward value for this transaction", ge=0.0
+    )
     loyalty_tier: Optional[str] = Field(None, description="Loyalty tier (gold, platinum, etc.)")
-    loyalty_multiplier: float = Field(default=1.0, description="Loyalty tier multiplier", ge=0.0, le=5.0)
-    
+    loyalty_multiplier: float = Field(
+        default=1.0, description="Loyalty tier multiplier", ge=0.0, le=5.0
+    )
+
     # Net value calculation
-    net_value: float = Field(..., description="Net value to consumer (rewards - out-of-pocket)", ge=-1000.0, le=1000.0)
+    net_value: float = Field(
+        ..., description="Net value to consumer (rewards - out-of-pocket)", ge=-1000.0, le=1000.0
+    )
     value_score: float = Field(..., description="Normalized value score (0.0-1.0)", ge=0.0, le=1.0)
-    
+
     # Eligibility and preferences
     eligible: bool = Field(..., description="Whether instrument is eligible for this transaction")
-    preference_score: float = Field(default=0.5, description="Consumer preference score", ge=0.0, le=1.0)
-    
+    preference_score: float = Field(
+        default=0.5, description="Consumer preference score", ge=0.0, le=1.0
+    )
+
     # Explanation data
-    selection_factors: List[str] = Field(default_factory=list, description="Factors favoring this instrument")
-    exclusion_reasons: List[str] = Field(default_factory=list, description="Reasons this instrument was not selected")
+    selection_factors: List[str] = Field(
+        default_factory=list, description="Factors favoring this instrument"
+    )
+    exclusion_reasons: List[str] = Field(
+        default_factory=list, description="Reasons this instrument was not selected"
+    )
 
 
 class MerchantProposal(BaseModel):
     """Merchant rail proposal from Orca."""
-    
-    rail_type: RailType = Field(..., description="Proposed payment rail (Card, ACH, RTP, FedNow, SEPA, Wire, Crypto)")
+
+    rail_type: RailType = Field(
+        ..., description="Proposed payment rail (Card, ACH, RTP, FedNow, SEPA, Wire, Crypto)"
+    )
     merchant_cost: float = Field(..., description="Merchant processing cost in basis points")
     settlement_days: int = Field(..., description="Days to settlement", ge=0)
     risk_score: float = Field(..., description="Risk score for this rail", ge=0.0, le=1.0)
@@ -441,45 +535,59 @@ class MerchantProposal(BaseModel):
 
 class ConsumerProposal(BaseModel):
     """Consumer's counter-proposal for payment rail and instrument."""
-    
+
     rail_type: RailType = Field(..., description="Proposed payment rail")
     instrument_type: InstrumentType = Field(..., description="Proposed payment instrument")
     consumer_benefit: float = Field(..., description="Consumer benefit in USD")
-    convenience_score: float = Field(..., ge=0.0, le=1.0, description="Convenience score for consumer")
+    convenience_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Convenience score for consumer"
+    )
     explanation: str = Field(..., description="Explanation for consumer choice")
 
 
 class CounterNegotiationRequest(BaseModel):
     """Request for consumer counter-negotiation."""
-    
+
     actor_id: str = Field(..., description="Consumer actor ID")
     transaction_amount: float = Field(..., gt=0, description="Transaction amount")
     currency: str = Field(default="USD", description="Transaction currency")
     merchant_id: Optional[str] = Field(None, description="Merchant identifier")
     mcc: Optional[str] = Field(None, description="Merchant Category Code")
     channel: str = Field(default="online", description="Transaction channel")
-    
+
     # Merchant proposal to counter
     merchant_proposal: MerchantProposal = Field(..., description="Merchant rail proposal")
-    
+
     # Consumer context
-    available_instruments: List[ConsumerInstrument] = Field(..., description="Available consumer instruments")
-    consumer_preferences: Dict[str, Any] = Field(default_factory=dict, description="Consumer preferences")
-    
+    available_instruments: List[ConsumerInstrument] = Field(
+        ..., description="Available consumer instruments"
+    )
+    consumer_preferences: Dict[str, Any] = Field(
+        default_factory=dict, description="Consumer preferences"
+    )
+
     # Negotiation parameters
-    reward_weight: float = Field(default=0.5, description="Weight for reward optimization", ge=0.0, le=1.0)
-    cost_weight: float = Field(default=0.3, description="Weight for cost minimization", ge=0.0, le=1.0)
-    preference_weight: float = Field(default=0.2, description="Weight for consumer preferences", ge=0.0, le=1.0)
+    reward_weight: float = Field(
+        default=0.5, description="Weight for reward optimization", ge=0.0, le=1.0
+    )
+    cost_weight: float = Field(
+        default=0.3, description="Weight for cost minimization", ge=0.0, le=1.0
+    )
+    preference_weight: float = Field(
+        default=0.2, description="Weight for consumer preferences", ge=0.0, le=1.0
+    )
 
 
 class CounterNegotiationResponse(BaseModel):
     """Response from consumer counter-negotiation."""
-    
+
     actor_id: str = Field(..., description="Consumer actor ID")
     trace_id: str = Field(..., description="Transaction trace ID")
     consumer_proposal: ConsumerProposal = Field(..., description="Consumer's counter-proposal")
     consumer_rewards: List[ConsumerReward] = Field(..., description="Consumer rewards")
-    alternatives: List[Dict[str, Any]] = Field(default_factory=list, description="Alternative options")
+    alternatives: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Alternative options"
+    )
     explanation: str = Field(..., description="Explanation for consumer choice")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in selection")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Negotiation metadata")

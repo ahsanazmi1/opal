@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 
 try:
     from openai import AzureOpenAI
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -24,11 +25,15 @@ logger = logging.getLogger(__name__)
 
 class ConsumerExplanationRequest(BaseModel):
     """Request for consumer explanation generation."""
-    
-    selected_instrument: Dict[str, Any] = Field(..., description="Selected consumer instrument details")
+
+    selected_instrument: Dict[str, Any] = Field(
+        ..., description="Selected consumer instrument details"
+    )
     rejected_instruments: List[Dict[str, Any]] = Field(..., description="Rejected instruments")
     merchant_proposal: Dict[str, Any] = Field(..., description="Merchant proposal details")
-    consumer_preferences: Dict[str, Any] = Field(default_factory=dict, description="Consumer preferences")
+    consumer_preferences: Dict[str, Any] = Field(
+        default_factory=dict, description="Consumer preferences"
+    )
     transaction_context: Dict[str, Any] = Field(..., description="Transaction context")
     ml_value_scores: Dict[str, float] = Field(..., description="ML value scores for instruments")
     explanation_type: str = Field(default="instrument_selection", description="Type of explanation")
@@ -36,7 +41,7 @@ class ConsumerExplanationRequest(BaseModel):
 
 class ConsumerExplanationResponse(BaseModel):
     """Response from consumer explanation generation."""
-    
+
     explanation: str = Field(..., description="Human-readable explanation")
     confidence: float = Field(..., description="Explanation confidence", ge=0.0, le=1.0)
     key_factors: List[str] = Field(..., description="Key factors in decision")
@@ -48,30 +53,28 @@ class ConsumerExplanationResponse(BaseModel):
 
 class OpalLLMExplainer:
     """Azure OpenAI-based consumer explanation generator."""
-    
+
     def __init__(self):
         self.client = None
         self.is_available = False
         self._initialize_client()
-    
+
     def _initialize_client(self):
         """Initialize Azure OpenAI client."""
         if not OPENAI_AVAILABLE:
             logger.warning("OpenAI library not available")
             return
-        
+
         # Get configuration from environment
         endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         api_key = os.getenv("AZURE_OPENAI_API_KEY")
         api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
         deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT", "opal-llm")
-        
+
         if endpoint and api_key:
             try:
                 self.client = AzureOpenAI(
-                    api_key=api_key,
-                    api_version=api_version,
-                    azure_endpoint=endpoint
+                    api_key=api_key, api_version=api_version, azure_endpoint=endpoint
                 )
                 self.is_available = True
                 logger.info(f"✅ Azure OpenAI client initialized with deployment: {deployment}")
@@ -81,11 +84,11 @@ class OpalLLMExplainer:
                 self.is_available = False
         else:
             logger.warning("Azure OpenAI not configured - missing endpoint or API key")
-    
+
     def is_configured(self) -> bool:
         """Check if Azure OpenAI is configured."""
         return self.is_available and self.client is not None
-    
+
     def get_configuration_status(self) -> Dict[str, Any]:
         """Get configuration status."""
         return {
@@ -94,38 +97,40 @@ class OpalLLMExplainer:
             "deployment": os.getenv("AZURE_OPENAI_DEPLOYMENT", "opal-llm"),
             "api_key": "***" if os.getenv("AZURE_OPENAI_API_KEY") else None,
         }
-    
-    def explain_consumer_choice(self, request: ConsumerExplanationRequest) -> Optional[ConsumerExplanationResponse]:
+
+    def explain_consumer_choice(
+        self, request: ConsumerExplanationRequest
+    ) -> Optional[ConsumerExplanationResponse]:
         """Generate explanation for consumer instrument selection."""
         if not self.is_configured():
             logger.warning("Azure OpenAI not configured, using fallback explanation")
             return self._generate_fallback_explanation(request)
-        
+
         start_time = datetime.now()
-        
+
         try:
             # Build the prompt
             system_prompt = self._get_system_prompt()
             user_prompt = self._build_explanation_prompt(request)
-            
+
             # Call Azure OpenAI
             response = self.client.chat.completions.create(
                 model=os.getenv("AZURE_OPENAI_DEPLOYMENT", "opal-llm"),
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.7,
-                max_tokens=1000
+                max_tokens=1000,
             )
-            
+
             raw_response = response.choices[0].message.content
-            
+
             # Parse the response
             explanation_data = self._parse_explanation_response(raw_response)
-            
+
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
-            
+
             return ConsumerExplanationResponse(
                 explanation=explanation_data.get("explanation", raw_response),
                 confidence=explanation_data.get("confidence", 0.8),
@@ -138,13 +143,13 @@ class OpalLLMExplainer:
                     "endpoint": os.getenv("AZURE_OPENAI_ENDPOINT"),
                 },
                 processing_time_ms=processing_time,
-                tokens_used=response.usage.total_tokens if response.usage else 0
+                tokens_used=response.usage.total_tokens if response.usage else 0,
             )
-            
+
         except Exception as e:
             logger.error(f"Error generating consumer explanation: {e}")
             return self._generate_fallback_explanation(request)
-    
+
     def _get_system_prompt(self) -> str:
         """Get the system prompt for consumer explanation generation."""
         return """You are an expert financial advisor for Opal, the Open Payment Agent.
@@ -165,14 +170,14 @@ JSON SCHEMA FOR RESPONSE:
 }
 
 Always respond with valid JSON matching this schema."""
-    
+
     def _build_explanation_prompt(self, request: ConsumerExplanationRequest) -> str:
         """Build the user prompt for explanation generation."""
         selected = request.selected_instrument
         rejected = request.rejected_instruments
         merchant = request.merchant_proposal
         context = request.transaction_context
-        
+
         return f"""Generate a clear explanation for this consumer payment choice:
 
 SELECTED INSTRUMENT: {selected.get('instrument_type', 'Unknown')} ({selected.get('provider', 'Unknown')})
@@ -191,8 +196,10 @@ TRANSACTION: ${context.get('transaction_amount', 0):.2f} via {context.get('chann
 CONSUMER PREFERENCES: {json.dumps(request.consumer_preferences, indent=2)}
 
 Please explain why the selected instrument provides the best value for this consumer."""
-    
-    def _format_rejected_instruments(self, rejected: List[Dict], value_scores: Dict[str, float]) -> str:
+
+    def _format_rejected_instruments(
+        self, rejected: List[Dict], value_scores: Dict[str, float]
+    ) -> str:
         """Format rejected instruments for the prompt."""
         formatted = []
         for instrument in rejected[:3]:  # Limit to top 3 rejected
@@ -202,7 +209,7 @@ Please explain why the selected instrument provides the best value for this cons
                 f"Value Score: {value_scores.get(instrument.get('instrument_id', ''), 0):.3f}"
             )
         return "\n".join(formatted) if formatted else "None"
-    
+
     def _parse_explanation_response(self, raw_response: str) -> Dict[str, Any]:
         """Parse the LLM response."""
         try:
@@ -221,30 +228,32 @@ Please explain why the selected instrument provides the best value for this cons
                     "explanation": raw_response,
                     "confidence": 0.7,
                     "key_factors": ["LLM-generated explanation"],
-                    "structured_analysis": {}
+                    "structured_analysis": {},
                 }
-            
+
             return json.loads(json_str)
-            
+
         except json.JSONDecodeError:
             # Fallback to plain text
             return {
                 "explanation": raw_response,
                 "confidence": 0.7,
                 "key_factors": ["LLM-generated explanation"],
-                "structured_analysis": {}
+                "structured_analysis": {},
             }
-    
-    def _generate_fallback_explanation(self, request: ConsumerExplanationRequest) -> ConsumerExplanationResponse:
+
+    def _generate_fallback_explanation(
+        self, request: ConsumerExplanationRequest
+    ) -> ConsumerExplanationResponse:
         """Generate fallback explanation when LLM is not available."""
         selected = request.selected_instrument
-        value_score = request.ml_value_scores.get(selected.get('instrument_id', ''), 0.5)
-        
+        value_score = request.ml_value_scores.get(selected.get("instrument_id", ""), 0.5)
+
         # Generate contextual explanation
-        instrument_type = selected.get('instrument_type', 'payment instrument')
-        reward_value = selected.get('total_reward_value', 0)
-        fee_cost = selected.get('out_of_pocket_cost', 0)
-        
+        instrument_type = selected.get("instrument_type", "payment instrument")
+        reward_value = selected.get("total_reward_value", 0)
+        fee_cost = selected.get("out_of_pocket_cost", 0)
+
         if reward_value > 0:
             explanation = f"Selected {instrument_type} for maximum rewards of ${reward_value:.2f}"
             if fee_cost == 0:
@@ -257,13 +266,13 @@ Please explain why the selected instrument provides the best value for this cons
                 explanation += " with no fees."
             else:
                 explanation += f" with minimal fees of ${fee_cost:.2f}."
-        
+
         # Add ML score context
         if value_score > 0.7:
             explanation += f" ML value analysis confirms this is an excellent choice (score: {value_score:.3f})."
         elif value_score > 0.5:
             explanation += f" ML value analysis supports this selection (score: {value_score:.3f})."
-        
+
         return ConsumerExplanationResponse(
             explanation=explanation,
             confidence=0.6,
@@ -272,16 +281,16 @@ Please explain why the selected instrument provides the best value for this cons
                 "value_score": value_score,
                 "reward_value": reward_value,
                 "fee_cost": fee_cost,
-                "explanation_type": "fallback"
+                "explanation_type": "fallback",
             },
             model_provenance={
                 "model_name": "fallback",
                 "provider": "opal_deterministic",
                 "status": "fallback_mode",
-                "message": "Azure OpenAI not available, using deterministic explanation"
+                "message": "Azure OpenAI not available, using deterministic explanation",
             },
             processing_time_ms=0,
-            tokens_used=0
+            tokens_used=0,
         )
 
 
@@ -303,11 +312,11 @@ def explain_consumer_instrument_choice(
     merchant_proposal: Dict[str, Any],
     consumer_preferences: Dict[str, Any],
     transaction_context: Dict[str, Any],
-    ml_value_scores: Dict[str, float]
+    ml_value_scores: Dict[str, float],
 ) -> Optional[ConsumerExplanationResponse]:
     """
     Generate LLM explanation for consumer instrument selection.
-    
+
     Args:
         selected_instrument: Details of the selected instrument
         rejected_instruments: List of rejected instruments
@@ -315,7 +324,7 @@ def explain_consumer_instrument_choice(
         consumer_preferences: Consumer preferences
         transaction_context: Transaction context
         ml_value_scores: ML value scores for all instruments
-        
+
     Returns:
         ConsumerExplanationResponse with explanation
     """
@@ -326,9 +335,9 @@ def explain_consumer_instrument_choice(
         consumer_preferences=consumer_preferences,
         transaction_context=transaction_context,
         ml_value_scores=ml_value_scores,
-        explanation_type="instrument_selection"
+        explanation_type="instrument_selection",
     )
-    
+
     explainer = get_consumer_explainer()
     return explainer.explain_consumer_choice(request)
 
@@ -337,59 +346,66 @@ async def explain_consumer_rail_choice(
     preferred_rail: str,
     all_evaluations: List[Any],
     merchant_proposal: Dict[str, Any],
-    preferences: Dict[str, Any]
+    preferences: Dict[str, Any],
 ) -> Optional[ConsumerExplanationResponse]:
     """
     Generate LLM explanation for consumer rail selection.
-    
+
     Args:
         preferred_rail: Consumer's preferred rail
         all_evaluations: All rail evaluations
         merchant_proposal: Merchant's rail proposal
         preferences: Consumer preferences
-        
+
     Returns:
         ConsumerExplanationResponse with rail explanation
     """
     try:
         explainer = get_consumer_explainer()
-        
+
         # Prepare rail explanation request
         request = ConsumerExplanationRequest(
             selected_instrument={
                 "rail_type": preferred_rail,
                 "composite_score": next(
-                    (eval.composite_score for eval in all_evaluations if eval.rail_type == preferred_rail),
-                    0.5
+                    (
+                        eval.composite_score
+                        for eval in all_evaluations
+                        if eval.rail_type == preferred_rail
+                    ),
+                    0.5,
                 ),
                 "explanation": next(
-                    (eval.explanation for eval in all_evaluations if eval.rail_type == preferred_rail),
-                    f"{preferred_rail} rail selected"
-                )
+                    (
+                        eval.explanation
+                        for eval in all_evaluations
+                        if eval.rail_type == preferred_rail
+                    ),
+                    f"{preferred_rail} rail selected",
+                ),
             },
             rejected_instruments=[
                 {
                     "rail_type": eval.rail_type,
                     "composite_score": eval.composite_score,
-                    "explanation": eval.explanation
+                    "explanation": eval.explanation,
                 }
-                for eval in all_evaluations if eval.rail_type != preferred_rail
+                for eval in all_evaluations
+                if eval.rail_type != preferred_rail
             ],
             merchant_proposal=merchant_proposal,
             consumer_preferences=preferences,
             transaction_context={
                 "transaction_amount": preferences.get("transaction_amount", 100.0),
                 "merchant_category": preferences.get("merchant_category", "general"),
-                "channel": preferences.get("channel", "online")
+                "channel": preferences.get("channel", "online"),
             },
-            ml_value_scores={
-                eval.rail_type: eval.composite_score for eval in all_evaluations
-            },
-            explanation_type="rail_selection"
+            ml_value_scores={eval.rail_type: eval.composite_score for eval in all_evaluations},
+            explanation_type="rail_selection",
         )
-        
+
         return explainer.generate_explanation(request)
-        
+
     except Exception as e:
         logger.error(f"Rail explanation generation failed: {e}")
         return None
