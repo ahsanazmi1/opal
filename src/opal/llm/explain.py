@@ -333,6 +333,68 @@ def explain_consumer_instrument_choice(
     return explainer.explain_consumer_choice(request)
 
 
+async def explain_consumer_rail_choice(
+    preferred_rail: str,
+    all_evaluations: List[Any],
+    merchant_proposal: Dict[str, Any],
+    preferences: Dict[str, Any]
+) -> Optional[ConsumerExplanationResponse]:
+    """
+    Generate LLM explanation for consumer rail selection.
+    
+    Args:
+        preferred_rail: Consumer's preferred rail
+        all_evaluations: All rail evaluations
+        merchant_proposal: Merchant's rail proposal
+        preferences: Consumer preferences
+        
+    Returns:
+        ConsumerExplanationResponse with rail explanation
+    """
+    try:
+        explainer = get_consumer_explainer()
+        
+        # Prepare rail explanation request
+        request = ConsumerExplanationRequest(
+            selected_instrument={
+                "rail_type": preferred_rail,
+                "composite_score": next(
+                    (eval.composite_score for eval in all_evaluations if eval.rail_type == preferred_rail),
+                    0.5
+                ),
+                "explanation": next(
+                    (eval.explanation for eval in all_evaluations if eval.rail_type == preferred_rail),
+                    f"{preferred_rail} rail selected"
+                )
+            },
+            rejected_instruments=[
+                {
+                    "rail_type": eval.rail_type,
+                    "composite_score": eval.composite_score,
+                    "explanation": eval.explanation
+                }
+                for eval in all_evaluations if eval.rail_type != preferred_rail
+            ],
+            merchant_proposal=merchant_proposal,
+            consumer_preferences=preferences,
+            transaction_context={
+                "transaction_amount": preferences.get("transaction_amount", 100.0),
+                "merchant_category": preferences.get("merchant_category", "general"),
+                "channel": preferences.get("channel", "online")
+            },
+            ml_value_scores={
+                eval.rail_type: eval.composite_score for eval in all_evaluations
+            },
+            explanation_type="rail_selection"
+        )
+        
+        return explainer.generate_explanation(request)
+        
+    except Exception as e:
+        logger.error(f"Rail explanation generation failed: {e}")
+        return None
+
+
 def is_consumer_llm_configured() -> bool:
     """Check if consumer LLM explanation service is configured."""
     explainer = get_consumer_explainer()

@@ -11,6 +11,9 @@ from pydantic import BaseModel
 
 from .controls import PaymentMethod, TransactionRequest, SpendControlResult, CounterNegotiationResponse, ConsumerInstrument
 
+# Set up logging
+logger = logging.getLogger(__name__)
+
 
 class MethodSelectedEvent(BaseModel):
     """CloudEvent for payment method selections."""
@@ -198,8 +201,8 @@ async def emit_consumer_explanation_event(
         extra={
             "event_id": event_id,
             "actor_id": actor_id,
-            "selected_instrument": negotiation_response.selected_instrument.instrument_type,
-            "consumer_value": negotiation_response.consumer_value,
+            "selected_instrument": negotiation_response.consumer_proposal.instrument_type,
+            "consumer_value": negotiation_response.consumer_proposal.consumer_benefit,
             "event_type": "ocn.opal.explanation.v1"
         }
     )
@@ -273,8 +276,8 @@ async def emit_counter_negotiation_event(
         extra={
             "event_id": event_id,
             "actor_id": actor_id,
-            "selected_instrument": negotiation_response.selected_instrument.instrument_type,
-            "win_win_score": negotiation_response.win_win_score,
+            "selected_instrument": negotiation_response.consumer_proposal.instrument_type,
+            "win_win_score": negotiation_response.metadata.get("win_win_score", 0.5),
             "event_type": "ocn.opal.counter_negotiation.v1"
         }
     )
@@ -384,3 +387,73 @@ METHOD_SELECTED_EVENT_SCHEMA = {
         },
     },
 }
+
+
+def emit_consumer_explanation_event(
+    response: CounterNegotiationResponse,
+    actor_id: str,
+    source: str = "https://opal.ocn.ai/consumer-explanation"
+) -> Dict[str, Any]:
+    """
+    Emit a CloudEvent for consumer instrument choice explanation.
+    
+    Args:
+        response: Counter-negotiation response
+        actor_id: Consumer actor ID
+        source: Event source URI
+        
+    Returns:
+        Dict containing the CloudEvent data
+    """
+    try:
+        event_data = {
+            "specversion": "1.0",
+            "id": f"evt_consumer_explanation_{uuid4().hex[:8]}",
+            "source": source,
+            "type": "ocn.opal.explanation.v1",
+            "subject": response.trace_id,
+            "time": datetime.now(timezone.utc).isoformat(),
+            "datacontenttype": "application/vnd.ocn.ap2+json; version=1",
+            "dataschema": "https://schemas.ocn.ai/events/v1/opal.explanation.v1.schema.json",
+            "data": {
+                "explanation_version": "0.1.0",
+                "trace_id": response.trace_id,
+                "actor_id": actor_id,
+                "explanation_type": "instrument_selection",
+                "selected_instrument": {
+                    "instrument_id": response.consumer_proposal.instrument_type,
+                    "instrument_type": response.consumer_proposal.instrument_type,
+                    "provider": response.consumer_proposal.instrument_type,
+                    "net_value": response.consumer_proposal.consumer_benefit,
+                    "total_reward_value": response.consumer_rewards[0].value if response.consumer_rewards else 0,
+                    "value_score": response.consumer_proposal.convenience_score,
+                    "selection_factors": ["consumer_benefit", "convenience"]
+                },
+                "explanation_result": {
+                    "explanation": response.explanation,
+                    "counter_proposal": response.consumer_proposal,
+                    "merchant_savings": response.metadata.get("merchant_savings", 0),
+                    "consumer_value": response.consumer_proposal.consumer_benefit,
+                    "win_win_score": response.metadata.get("win_win_score", 0.5),
+                    "rejected_instruments_count": len(response.alternatives)
+                },
+                "negotiation_metadata": response.metadata,
+                "timestamp": response.metadata.get("timestamp", datetime.now().isoformat())
+            }
+        }
+        
+        # Log the event
+        logger.info(f"Emitting consumer explanation event: {event_data['id']} for actor {actor_id}")
+        
+        # In a real implementation, you would emit this to an event bus
+        # For now, we'll just log it
+        import os
+        import json
+        if os.getenv("OCN_EMIT_EVENTS", "false").lower() == "true":
+            logger.info(f"Consumer explanation event data: {json.dumps(event_data, indent=2, default=str)}")
+        
+        return event_data
+        
+    except Exception as e:
+        logger.error(f"Failed to emit consumer explanation event: {e}")
+        return {}

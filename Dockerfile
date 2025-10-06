@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir -e .
 # Copy application code
 COPY src/ ./src/
 COPY mcp/ ./mcp/
+COPY models/ ./models/
 
 # Expose port
 EXPOSE 8084

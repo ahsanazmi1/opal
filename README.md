@@ -6,14 +6,16 @@
 
 **Opal** is the **open, transparent payment agent** for the [Open Checkout Network (OCN)](https://github.com/ocn-ai/ocn-common).
 
-## Phase 2 — Explainability
+## Phase 4 — Payment Instruction & Visibility
 
-🚧 **Currently in development** - Phase 2 focuses on AI-powered explainability and human-readable payment decision reasoning.
+🚧 **Currently in development** - Phase 4 focuses on payment instruction generation, settlement visibility, and comprehensive payment tracking for payment operations.
 
-- **Status**: Active development on `phase-2-explainability` branch
-- **Features**: LLM integration, explainability API endpoints, decision audit trails
-- **Issue Tracker**: [Phase 2 Issues](https://github.com/ahsanazmi1/opal/issues?q=is%3Aopen+is%3Aissue+label%3Aphase-2)
-- **Timeline**: Weeks 4-8 of OCN development roadmap
+- **Status**: Active development on `phase-4-instruction` branch
+- **Features**: Payment instruction schemas, settlement visibility, payment tracking, instruction validation
+- **Issue Tracker**: [Phase 4 Issues](https://github.com/ahsanazmi1/opal/issues?q=is%3Aopen+is%3Aissue+label%3Aphase-4)
+- **Timeline**: Weeks 12-16 of OCN development roadmap
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed Phase 4 progress and features.
 
 ## Purpose
 

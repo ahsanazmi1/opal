@@ -1,0 +1,127 @@
+{
+  "actor_id": "consumer_demo_456",
+  "transaction_amount": 200.00,
+  "currency": "USD",
+  "merchant_proposal": {
+    "rail_type": "ACH",
+    "merchant_cost": 300,
+    "settlement_days": 3,
+    "risk_score": 0.25,
+    "explanation": "ACH rail offers lowest processing cost for merchant",
+    "trace_id": "merchant_proposal_demo_789"
+  },
+  "available_instruments": [
+    {
+      "instrument_id": "cc_premium_001",
+      "instrument_type": "credit_card",
+      "provider": "Premium Bank",
+      "last_four": "4321",
+      "base_fee": 180,
+      "out_of_pocket_cost": 0.0,
+      "available_balance": 8000.0,
+      "rewards": [
+        {
+          "reward_type": "cashback",
+          "reward_value": 2.5,
+          "description": "2.5% cashback on all purchases"
+        }
+      ],
+      "total_reward_value": 5.0,
+      "loyalty_tier": "platinum",
+      "loyalty_multiplier": 1.3,
+      "net_value": 5.0,
+      "value_score": 0.0,
+      "eligible": true,
+      "preference_score": 0.9,
+      "selection_factors": [],
+      "exclusion_reasons": []
+    },
+    {
+      "instrument_id": "bnpl_affirm_001",
+      "instrument_type": "bnpl",
+      "provider": "Affirm",
+      "last_four": "8888",
+      "base_fee": 80,
+      "out_of_pocket_cost": 0.0,
+      "available_balance": 1500.0,
+      "rewards": [
+        {
+          "reward_type": "bnpl_benefits",
+          "reward_value": 3.0,
+          "description": "No interest if paid within 30 days"
+        }
+      ],
+      "total_reward_value": 3.0,
+      "loyalty_multiplier": 1.0,
+      "net_value": 3.0,
+      "value_score": 0.0,
+      "eligible": true,
+      "preference_score": 0.8,
+      "selection_factors": [],
+      "exclusion_reasons": []
+    },
+    {
+      "instrument_id": "stable_usdc_002",
+      "instrument_type": "stablecoin",
+      "provider": "Coinbase",
+      "last_four": "0002",
+      "base_fee": 60,
+      "out_of_pocket_cost": 0.0,
+      "available_balance": 1000.0,
+      "rewards": [
+        {
+          "reward_type": "crypto_rewards",
+          "reward_value": 2.4,
+          "description": "1.2% crypto rewards on USDC"
+        }
+      ],
+      "total_reward_value": 2.4,
+      "loyalty_multiplier": 1.0,
+      "net_value": 2.4,
+      "value_score": 0.0,
+      "eligible": true,
+      "preference_score": 0.95,
+      "selection_factors": [],
+      "exclusion_reasons": []
+    },
+    {
+      "instrument_id": "prepaid_gift_001",
+      "instrument_type": "prepaid_card",
+      "provider": "Visa Gift",
+      "last_four": "7777",
+      "base_fee": 120,
+      "out_of_pocket_cost": 0.0,
+      "available_balance": 500.0,
+      "rewards": [],
+      "total_reward_value": 0.0,
+      "loyalty_multiplier": 1.0,
+      "net_value": 0.0,
+      "value_score": 0.0,
+      "eligible": true,
+      "preference_score": 0.3,
+      "selection_factors": [],
+      "exclusion_reasons": []
+    }
+  ],
+  "consumer_preferences": {
+    "cash_rewards": 1.5,
+    "loyalty_programs": 0.8,
+    "bnpl_preference": 1.2,
+    "convenience_preference": 1.1,
+    "crypto_rewards": 1.8,
+    "category_preferences": {
+      "cash_rewards": 1.5,
+      "loyalty_programs": 0.8,
+      "bnpl_preference": 1.2,
+      "crypto_rewards": 1.8
+    }
+  }
+}
+
+
+
+
+
+
+
+

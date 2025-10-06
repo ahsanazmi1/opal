@@ -185,55 +185,158 @@ class SpendControls:
     @classmethod
     def get_available_payment_methods(cls, actor_id: str) -> List[PaymentMethod]:
         """
-        Get available payment methods for an actor (stubbed).
+        Get available payment methods for an actor with realistic top credit cards and stablecoin.
 
         Args:
             actor_id: Actor identifier
 
         Returns:
-            List of available payment methods
+            List of available payment methods including top 10 credit cards and stablecoin wallet
         """
-        # Stubbed payment methods - in production would query actual data
+        # Top 10 most popular credit cards in 2024 + stablecoin wallet
         methods = [
+            # 1. Chase Sapphire Preferred
             PaymentMethod(
-                method_id=f"pm_{actor_id}_visa_001",
+                method_id=f"pm_{actor_id}_chase_sapphire_preferred",
                 type="card",
-                provider="visa",
-                last_four="4242",
+                provider="chase",
+                last_four="4532",
+                expiry_month=8,
+                expiry_year=2027,
+                status="active",
+                metadata={"card_type": "credit", "network": "visa", "card_name": "Chase Sapphire Preferred", "rewards": "2x_travel_dining"},
+            ),
+            # 2. Capital One Venture Rewards
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_capital_one_venture",
+                type="card",
+                provider="capital_one",
+                last_four="5178",
+                expiry_month=11,
+                expiry_year=2026,
+                status="active",
+                metadata={"card_type": "credit", "network": "visa", "card_name": "Capital One Venture Rewards", "rewards": "2x_all_purchases"},
+            ),
+            # 3. American Express Gold Card
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_amex_gold",
+                type="card",
+                provider="american_express",
+                last_four="3782",
+                expiry_month=3,
+                expiry_year=2028,
+                status="active",
+                metadata={"card_type": "credit", "network": "amex", "card_name": "American Express Gold Card", "rewards": "4x_dining_groceries"},
+            ),
+            # 4. Citi Double Cash
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_citi_double_cash",
+                type="card",
+                provider="citi",
+                last_four="5424",
+                expiry_month=6,
+                expiry_year=2027,
+                status="active",
+                metadata={"card_type": "credit", "network": "mastercard", "card_name": "Citi Double Cash", "rewards": "2x_all_purchases"},
+            ),
+            # 5. Discover it Cash Back
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_discover_it",
+                type="card",
+                provider="discover",
+                last_four="6011",
+                expiry_month=9,
+                expiry_year=2026,
+                status="active",
+                metadata={"card_type": "credit", "network": "discover", "card_name": "Discover it Cash Back", "rewards": "5x_rotating_categories"},
+            ),
+            # 6. Wells Fargo Active Cash
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_wells_fargo_active",
+                type="card",
+                provider="wells_fargo",
+                last_four="4000",
                 expiry_month=12,
                 expiry_year=2025,
                 status="active",
-                metadata={"card_type": "credit", "network": "visa"},
+                metadata={"card_type": "credit", "network": "visa", "card_name": "Wells Fargo Active Cash", "rewards": "2x_all_purchases"},
             ),
+            # 7. Bank of America Customized Cash Rewards
             PaymentMethod(
-                method_id=f"pm_{actor_id}_mc_002",
+                method_id=f"pm_{actor_id}_boa_customized",
                 type="card",
-                provider="mastercard",
+                provider="bank_of_america",
                 last_four="5555",
-                expiry_month=10,
-                expiry_year=2026,
+                expiry_month=4,
+                expiry_year=2027,
                 status="active",
-                metadata={"card_type": "debit", "network": "mastercard"},
+                metadata={"card_type": "credit", "network": "visa", "card_name": "Bank of America Customized Cash", "rewards": "3x_category_choice"},
             ),
+            # 8. Chase Freedom Unlimited
             PaymentMethod(
-                method_id=f"pm_{actor_id}_bank_003",
-                type="bank",
+                method_id=f"pm_{actor_id}_chase_freedom_unlimited",
+                type="card",
                 provider="chase",
                 last_four="1234",
+                expiry_month=7,
+                expiry_year=2026,
+                status="active",
+                metadata={"card_type": "credit", "network": "visa", "card_name": "Chase Freedom Unlimited", "rewards": "1.5x_all_purchases"},
+            ),
+            # 9. Capital One Quicksilver
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_capital_one_quicksilver",
+                type="card",
+                provider="capital_one",
+                last_four="2223",
+                expiry_month=2,
+                expiry_year=2028,
+                status="active",
+                metadata={"card_type": "credit", "network": "visa", "card_name": "Capital One Quicksilver", "rewards": "1.5x_all_purchases"},
+            ),
+            # 10. Apple Card
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_apple_card",
+                type="card",
+                provider="goldman_sachs",
+                last_four="5678",
+                expiry_month=10,
+                expiry_year=2027,
+                status="active",
+                metadata={"card_type": "credit", "network": "mastercard", "card_name": "Apple Card", "rewards": "2x_apple_pay_1x_physical"},
+            ),
+            # Stablecoin Wallet (USDC)
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_usdc_wallet",
+                type="wallet",
+                provider="coinbase",
+                last_four="USDC",
                 expiry_month=None,
                 expiry_year=None,
                 status="active",
-                metadata={"account_type": "checking", "routing": "021000021"},
+                metadata={"wallet_type": "stablecoin", "currency": "USDC", "balance": "5000.00", "verified": "true"},
             ),
+            # PayPal Digital Wallet
             PaymentMethod(
-                method_id=f"pm_{actor_id}_wallet_004",
+                method_id=f"pm_{actor_id}_paypal_wallet",
                 type="wallet",
                 provider="paypal",
-                last_four="5678",
+                last_four="9012",
                 expiry_month=None,
                 expiry_year=None,
                 status="active",
-                metadata={"wallet_type": "paypal", "verified": "true"},
+                metadata={"wallet_type": "paypal", "verified": "true", "balance": "2500.00"},
+            ),
+            # Bank Account (Chase Checking)
+            PaymentMethod(
+                method_id=f"pm_{actor_id}_chase_checking",
+                type="bank",
+                provider="chase",
+                last_four="3456",
+                expiry_month=None,
+                expiry_year=None,
+                status="active",
+                metadata={"account_type": "checking", "routing": "021000021", "balance": "15000.00"},
             ),
         ]
 
@@ -274,10 +377,13 @@ class SpendControls:
 # Phase 3 - Consumer Counter-Negotiation Models
 
 # Define valid instrument types for consumer negotiation
-InstrumentType = Literal["credit_card", "debit_card", "bnpl", "wallet", "bank_transfer", "rewards_card"]
+# Define valid rail types - Extended for multi-rail support
+RailType = Literal["Card", "ACH", "RTP", "FedNow", "SEPA", "Wire", "Crypto"]
+
+InstrumentType = Literal["credit_card", "debit_card", "bnpl", "wallet", "bank_transfer", "rewards_card", "prepaid_card", "stablecoin", "digital_wallet"]
 
 # Define valid reward types
-RewardType = Literal["cashback", "points", "miles", "loyalty_points", "discount"]
+RewardType = Literal["cashback", "points", "miles", "loyalty_points", "discount", "crypto_rewards", "bnpl_benefits", "cash_advance"]
 
 class ConsumerReward(BaseModel):
     """Consumer reward information for an instrument."""
@@ -325,12 +431,22 @@ class ConsumerInstrument(BaseModel):
 class MerchantProposal(BaseModel):
     """Merchant rail proposal from Orca."""
     
-    rail_type: str = Field(..., description="Proposed payment rail (ACH, Debit, Credit)")
+    rail_type: RailType = Field(..., description="Proposed payment rail (Card, ACH, RTP, FedNow, SEPA, Wire, Crypto)")
     merchant_cost: float = Field(..., description="Merchant processing cost in basis points")
     settlement_days: int = Field(..., description="Days to settlement", ge=0)
     risk_score: float = Field(..., description="Risk score for this rail", ge=0.0, le=1.0)
     explanation: str = Field(..., description="Merchant explanation for rail selection")
     trace_id: str = Field(..., description="Transaction trace ID")
+
+
+class ConsumerProposal(BaseModel):
+    """Consumer's counter-proposal for payment rail and instrument."""
+    
+    rail_type: RailType = Field(..., description="Proposed payment rail")
+    instrument_type: InstrumentType = Field(..., description="Proposed payment instrument")
+    consumer_benefit: float = Field(..., description="Consumer benefit in USD")
+    convenience_score: float = Field(..., ge=0.0, le=1.0, description="Convenience score for consumer")
+    explanation: str = Field(..., description="Explanation for consumer choice")
 
 
 class CounterNegotiationRequest(BaseModel):
@@ -359,17 +475,11 @@ class CounterNegotiationRequest(BaseModel):
 class CounterNegotiationResponse(BaseModel):
     """Response from consumer counter-negotiation."""
     
-    selected_instrument: ConsumerInstrument = Field(..., description="Selected consumer instrument")
-    counter_proposal: Dict[str, Any] = Field(..., description="Consumer counter-proposal")
-    explanation: str = Field(..., description="Explanation for instrument selection")
+    actor_id: str = Field(..., description="Consumer actor ID")
     trace_id: str = Field(..., description="Transaction trace ID")
-    timestamp: datetime = Field(..., description="Negotiation timestamp")
-    
-    # Negotiation metadata
-    negotiation_metadata: Dict[str, Any] = Field(default_factory=dict, description="Negotiation metadata")
-    rejected_instruments: List[ConsumerInstrument] = Field(default_factory=list, description="Rejected instruments")
-    
-    # Value analysis
-    merchant_savings: float = Field(..., description="Potential merchant cost savings")
-    consumer_value: float = Field(..., description="Net value to consumer")
-    win_win_score: float = Field(..., description="Overall win-win score", ge=0.0, le=1.0)
+    consumer_proposal: ConsumerProposal = Field(..., description="Consumer's counter-proposal")
+    consumer_rewards: List[ConsumerReward] = Field(..., description="Consumer rewards")
+    alternatives: List[Dict[str, Any]] = Field(default_factory=list, description="Alternative options")
+    explanation: str = Field(..., description="Explanation for consumer choice")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in selection")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Negotiation metadata")

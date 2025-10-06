@@ -10,7 +10,16 @@ from pydantic import BaseModel, Field
 
 from .controls import SpendControls, TransactionRequest, CounterNegotiationRequest, CounterNegotiationResponse, ConsumerInstrument, MerchantProposal
 from .events import emit_method_selected_event
-from .negotiation import counter_negotiation, negotiateWalletChoice
+from .negotiation import counter_negotiation, negotiateWalletChoice, enhanced_counter_negotiation_with_rail_evaluation
+
+# Import ML-enhanced controls
+try:
+    from .ml_enhanced_controls import ml_enhanced_controls
+    ML_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ ML models not available: {e}")
+    ML_AVAILABLE = False
+
 import sys
 import os
 
@@ -101,7 +110,10 @@ async def health_check():
 @app.get("/controls/limits", response_model=ControlLimitsResponse)
 async def get_control_limits():
     """Get current spend control limits and parameters."""
-    limits = SpendControls.get_control_limits()
+    if ML_AVAILABLE:
+        limits = ml_enhanced_controls.get_control_limits()
+    else:
+        limits = SpendControls.get_control_limits()
     return ControlLimitsResponse(**limits)
 
 
@@ -175,8 +187,11 @@ async def select_payment_method(request: SelectPaymentMethodRequest):
                 detail=f"Payment method {request.payment_method_id} not available for actor {request.actor_id}",
             )
 
-        # Evaluate against spend controls
-        control_result = SpendControls.evaluate_transaction(transaction_request)
+        # Evaluate against spend controls (ML-enhanced if available)
+        if ML_AVAILABLE:
+            control_result = ml_enhanced_controls.evaluate_transaction(transaction_request)
+        else:
+            control_result = SpendControls.evaluate_transaction(transaction_request)
 
         # Create response
         response = SelectPaymentMethodResponse(
@@ -339,8 +354,8 @@ async def counter_negotiate(request: CounterNegotiationRequest) -> CounterNegoti
     - Returns optimal consumer instrument to counter merchant proposal
     """
     try:
-        # Perform counter-negotiation
-        response = await counter_negotiation(request)
+        # Perform enhanced counter-negotiation with rail evaluation
+        response = await enhanced_counter_negotiation_with_rail_evaluation(request)
         
         return response
         
@@ -394,16 +409,59 @@ async def get_sample_instruments() -> Dict[str, Any]:
     """
     Get sample consumer instruments for testing counter-negotiation.
     """
-    from .negotiation import create_sample_credit_card, create_sample_bnpl, create_sample_debit_card
+    from .negotiation import create_sample_credit_card, create_sample_bnpl, create_sample_debit_card, create_sample_stablecoin_wallet
     
     return {
         "sample_instruments": [
             create_sample_credit_card().dict(),
             create_sample_bnpl().dict(),
             create_sample_debit_card().dict(),
+            create_sample_stablecoin_wallet().dict(),
         ],
         "usage": "Use these sample instruments in counter-negotiation requests for testing"
     }
+
+
+@app.get("/ml/status", response_model=Dict[str, Any])
+async def get_ml_status():
+    """Get ML model status and configuration."""
+    if not ML_AVAILABLE:
+        return {
+            "ml_enabled": False,
+            "error": "ML models not available"
+        }
+    
+    try:
+        from .ml.fraud_detection import get_fraud_model
+        from .ml.value_scoring import get_value_scorer
+        
+        fraud_model = get_fraud_model()
+        value_scorer = get_value_scorer()
+        
+        return {
+            "ml_enabled": ml_enhanced_controls.use_ml,
+            "ml_weight": ml_enhanced_controls.ml_weight,
+            "models": {
+                "fraud_detection": {
+                    "loaded": fraud_model.is_loaded,
+                    "model_type": fraud_model.metadata.get("model_type", "unknown"),
+                    "version": fraud_model.metadata.get("version", "unknown"),
+                    "training_date": fraud_model.metadata.get("trained_on", "unknown"),
+                    "features": len(fraud_model.feature_names) if fraud_model.feature_names else 0
+                },
+                "value_scoring": {
+                    "loaded": value_scorer.model is not None,
+                    "model_type": value_scorer.model_type,
+                    "version": value_scorer.model_version,
+                    "features": len(value_scorer.feature_names) if value_scorer.feature_names else 0
+                }
+            }
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get ML status: {str(e)}",
+        )
 
 
 if __name__ == "__main__":
