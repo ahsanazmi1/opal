@@ -573,6 +573,65 @@ class TestEnhancedCounterNegotiateFunction:
 
 
 @pytest.fixture
+def sample_consumer_instruments():
+    """Create sample consumer instruments for tests."""
+    return [
+        ConsumerInstrument(
+            instrument_id="cc_visa_001",
+            instrument_type="credit_card",
+            provider="Visa",
+            last_four="1234",
+            base_fee=200,
+            out_of_pocket_cost=0.0,
+            available_balance=5000.0,
+            rewards=[
+                ConsumerReward(
+                    reward_type="cashback",
+                    rate=0.02,
+                    value=3.0,
+                    description="2% cashback on all purchases",
+                )
+            ],
+            total_reward_value=3.0,
+            loyalty_tier="gold",
+            loyalty_multiplier=1.2,
+            net_value=3.0,
+            value_score=0.0,
+            eligible=True,
+            preference_score=0.8,
+            selection_factors=[],
+            exclusion_reasons=[],
+        ),
+        ConsumerInstrument(
+            instrument_id="bnpl_klarna_001",
+            instrument_type="bnpl",
+            provider="Klarna",
+            last_four="9999",
+            base_fee=50,
+            out_of_pocket_cost=0.0,
+            available_balance=1000.0,
+            rewards=[
+                ConsumerReward(
+                    reward_type="bnpl_benefits",
+                    rate=0.0167,
+                    value=2.5,
+                    description="No interest if paid on time",
+                )
+            ],
+            total_reward_value=2.5,
+            loyalty_tier=None,
+            loyalty_multiplier=1.0,
+            net_value=2.5,
+            value_score=0.0,
+            eligible=True,
+            preference_score=0.7,
+            selection_factors=[],
+            exclusion_reasons=[],
+        ),
+    ]
+
+
+@pytest.fixture
 def sample_merchant_proposal():
     """Create a sample merchant proposal for tests."""
     return MerchantProposal(
