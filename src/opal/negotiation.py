@@ -476,26 +476,7 @@ async def negotiateWalletChoice(
             selected_instrument, rejected_instruments, merchant_proposal, None
         )
 
-    # 5. Create counter-proposal
-    counter_proposal = {
-        "proposed_instrument_type": selected_instrument.instrument_type,
-        "proposed_instrument_id": selected_instrument.instrument_id,
-        "consumer_net_value": selected_instrument.net_value,
-        "total_reward_value": selected_instrument.total_reward_value,
-        "out_of_pocket_cost": selected_instrument.out_of_pocket_cost,
-        "ml_value_score": selected_instrument.value_score,
-        "merchant_impact_estimate": {
-            "estimated_fee_bps": selected_instrument.base_fee,
-            "estimated_settlement_days": (
-                1
-                if selected_instrument.instrument_type in ["credit_card", "debit_card", "wallet"]
-                else 2
-            ),
-        },
-        "explanation_summary": f"Consumer prefers {selected_instrument.instrument_type} with ML value score {selected_instrument.value_score:.3f}",
-    }
-
-    # 6. Calculate win-win metrics
+    # 5. Calculate win-win metrics (counter-proposal details captured in response)
     merchant_savings = max(0.0, merchant_proposal.merchant_cost - selected_instrument.base_fee)
     consumer_value = selected_instrument.net_value
 
@@ -851,27 +832,7 @@ async def counter_negotiation(request: CounterNegotiationRequest) -> CounterNego
         selected_instrument, rejected_instruments, request.merchant_proposal, request
     )
 
-    # Create counter-proposal
-    counter_proposal = {
-        "instrument_type": selected_instrument.instrument_type,
-        "instrument_id": selected_instrument.instrument_id,
-        "provider": selected_instrument.provider,
-        "consumer_value": selected_instrument.net_value,
-        "rewards": selected_instrument.total_reward_value,
-        "out_of_pocket": selected_instrument.out_of_pocket_cost,
-        "settlement": (
-            "immediate"
-            if selected_instrument.instrument_type in ["credit_card", "bnpl"]
-            else "instant"
-        ),
-        "merchant_benefit": (
-            "lower_processing_cost"
-            if selected_instrument.base_fee < request.merchant_proposal.merchant_cost
-            else "same_processing_cost"
-        ),
-    }
-
-    # Calculate merchant savings potential
+    # Calculate merchant savings potential (counter-proposal details captured in response)
     merchant_savings = max(
         0, request.merchant_proposal.merchant_cost - selected_instrument.base_fee
     )

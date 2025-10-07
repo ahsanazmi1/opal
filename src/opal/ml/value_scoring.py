@@ -5,11 +5,10 @@ This module provides machine learning models to score consumer payment instrumen
 based on rewards rate, fees, loyalty bonuses, and card tiers.
 """
 
-import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 import numpy as np
 

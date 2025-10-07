@@ -10,15 +10,12 @@ This module tests the negotiateWalletChoice function with:
 
 import asyncio
 import pytest
-from datetime import datetime
 
 from src.opal.negotiation import negotiateWalletChoice
 from src.opal.controls import (
     ConsumerInstrument,
     ConsumerReward,
     MerchantProposal,
-    InstrumentType,
-    RewardType,
 )
 from src.opal.ml.value_scoring import score_consumer_instrument_value, ConsumerValueFeatures
 

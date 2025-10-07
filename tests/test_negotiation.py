@@ -6,17 +6,12 @@ including reward calculations, instrument evaluation, and CloudEvent emission.
 """
 
 import pytest
-from decimal import Decimal
-from datetime import datetime
-from unittest.mock import patch, MagicMock
 
 from src.opal.controls import (
     ConsumerInstrument,
     ConsumerReward,
     MerchantProposal,
     CounterNegotiationRequest,
-    CounterNegotiationResponse,
-    RewardType
 )
 from src.opal.negotiation import (
     calculate_rewards_for_transaction,

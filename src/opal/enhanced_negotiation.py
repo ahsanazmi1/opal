@@ -242,7 +242,7 @@ class MultiInstrumentNegotiator:
         optimal_instrument, optimal_details = scored_instruments[0]
 
         # Generate counter-proposal
-        counter_proposal = self._generate_counter_proposal(
+        _ = self._generate_counter_proposal(
             optimal_instrument, request.merchant_proposal, optimal_details
         )
 

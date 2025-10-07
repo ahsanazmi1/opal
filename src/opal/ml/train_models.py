@@ -31,7 +31,7 @@ def train_value_scoring_model():
     # This is just a placeholder for future enhancements
     from opal.ml.value_scoring import get_value_scorer
 
-    scorer = get_value_scorer()
+    _ = get_value_scorer()
     print("✅ Value scoring model ready")
 
 

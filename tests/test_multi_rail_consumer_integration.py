@@ -98,7 +98,7 @@ class TestMultiRailConsumerIntegration:
         assert evaluation["total_consumer_value"] > 0.8
         assert evaluation["reward_value"] > 0  # Should earn rewards
         assert evaluation["convenience_score"] > 0.8  # High convenience
-        assert evaluation["is_preferred"] == True
+        assert evaluation["is_preferred"]
 
         # Verify expected values match fixture
         expected = fixture["expected_optimal_combination"]
@@ -134,7 +134,7 @@ class TestMultiRailConsumerIntegration:
         assert evaluation["total_consumer_value"] > 0.6
         assert evaluation["reward_value"] > 0  # Should earn some rewards
         assert evaluation["convenience_score"] > 0.7  # Good convenience
-        assert evaluation["is_preferred"] == True  # FedNow is preferred
+        assert evaluation["is_preferred"]  # FedNow is preferred
 
         # Verify real-time processing benefit
         assert "instant processing" in evaluation["explanation"]
