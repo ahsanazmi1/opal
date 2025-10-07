@@ -55,7 +55,8 @@ class TestMultiInstrumentNegotiator:
                 rewards=[
                     ConsumerReward(
                         reward_type="cashback",
-                        reward_value=2.0,  # 2% cashback
+                        rate=0.02,  # 2% cashback
+                        value=3.0,  # $3 on $150 transaction
                         description="2% cashback on all purchases",
                     )
                 ],
@@ -81,7 +82,8 @@ class TestMultiInstrumentNegotiator:
                 rewards=[
                     ConsumerReward(
                         reward_type="cashback",
-                        reward_value=1.0,  # 1% cashback
+                        rate=0.01,  # 1% cashback
+                        value=1.5,  # $1.50 on $150 transaction
                         description="1% cashback on debit purchases",
                     )
                 ],
@@ -107,7 +109,8 @@ class TestMultiInstrumentNegotiator:
                 rewards=[
                     ConsumerReward(
                         reward_type="bnpl_benefits",
-                        reward_value=2.5,  # $2.50 in BNPL benefits
+                        rate=0.0167,  # ~1.67% equivalent benefit
+                        value=2.5,  # $2.50 in BNPL benefits on $150 transaction
                         description="No interest if paid on time",
                     )
                 ],
@@ -133,7 +136,8 @@ class TestMultiInstrumentNegotiator:
                 rewards=[
                     ConsumerReward(
                         reward_type="crypto_rewards",
-                        reward_value=1.8,  # $1.80 in crypto rewards
+                        rate=0.012,  # 1.2% crypto rewards
+                        value=1.8,  # $1.80 in crypto rewards on $150 transaction
                         description="1.2% crypto rewards on USDC",
                     )
                 ],
