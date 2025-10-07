@@ -47,7 +47,7 @@ jobs:
               python -m json.tool "$file" > /dev/null || { echo "❌ Invalid JSON in $file"; exit 1; }
               echo "✅ Valid JSON: $file"
             elif [[ "$file" == *.yaml || "$file" == *.yml ]]; then
-              python -c "import yaml; with open('$file', 'r') as f: yaml.safe_load(f)" > /dev/null || { echo "❌ Invalid YAML in $file"; exit 1; }
+              python -c "import yaml; f = open('$file', 'r'); yaml.safe_load(f); f.close()" > /dev/null || { echo "❌ Invalid YAML in $file"; exit 1; }
               echo "✅ Valid YAML: $file"
             fi
           done
