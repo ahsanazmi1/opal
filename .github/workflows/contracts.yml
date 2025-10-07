@@ -38,6 +38,7 @@ jobs:
       - name: Validate JSON examples against ocn-common (if available)
         if: steps.check_dirs.outputs.has_examples_schemas == 'true'
         run: |
+          . .venv/bin/activate
           echo "🔍 Validating JSON examples against ocn-common..."
           # Placeholder for actual validation logic
           # This would typically involve installing ocn-common and using its validation utilities
@@ -47,7 +48,7 @@ jobs:
               python -m json.tool "$file" > /dev/null || { echo "❌ Invalid JSON in $file"; exit 1; }
               echo "✅ Valid JSON: $file"
             elif [[ "$file" == *.yaml || "$file" == *.yml ]]; then
-              python -c "import yaml; with open('$file', 'r') as f: yaml.safe_load(f)" > /dev/null || { echo "❌ Invalid YAML in $file"; exit 1; }
+              python -c "import yaml; f = open('$file', 'r'); yaml.safe_load(f); f.close()" > /dev/null || { echo "❌ Invalid YAML in $file"; exit 1; }
               echo "✅ Valid YAML: $file"
             fi
           done

@@ -2,8 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.3.0 — Phase 3: Negotiation & Live Fee Bidding
+- New branch: phase-3-bidding
+- Prep for negotiation, bidding, policy DSL, and processor connectors
+- README updated with Phase 3 checklist
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.4.0] - Phase 4
+
+### 🚀 Phase 4 — Payment Instruction & Visibility
+
+This release initiates Phase 4 development, focusing on payment instruction generation, settlement visibility, and comprehensive payment tracking for payment operations.
+
+#### Planned Features
+- **Payment Instruction Generation**: Generate standardized payment instructions for payment operations
+- **Settlement Visibility**: Real-time tracking and visibility into payment settlement processes
+- **Payment Tracking**: Comprehensive payment tracking across payment workflows
+- **Instruction Validation**: Enhanced validation for payment instructions and settlement confirmations
+- **CloudEvents Integration**: New event types for payment instruction and settlement visibility
+
+#### Timeline
+- **Status**: Active development on `phase-4-instruction` branch
+- **Timeline**: Weeks 12-16 of OCN development roadmap
+- **Issue Tracker**: [Phase 4 Issues](https://github.com/ahsanazmi1/opal/issues?q=is%3Aopen+is%3Aissue+label%3Aphase-4)
 
 ## [Unreleased]
 

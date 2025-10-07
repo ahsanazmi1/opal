@@ -1,0 +1,35 @@
+# Azure OpenAI Configuration for Opal Phase 3
+# This file contains the Azure OpenAI configuration for LLM-powered consumer explanations
+
+# Azure OpenAI Endpoint (Updated to new working endpoint)
+AZURE_OPENAI_ENDPOINT=https://ahsan-mg2o4k7e-eastus2.services.ai.azure.com/
+
+# Azure OpenAI API Key (replace with your actual key)
+AZURE_OPENAI_API_KEY=your-api-key-here
+
+# Azure OpenAI API Version
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+
+# Azure OpenAI Deployment Name (opal-llm for Opal)
+AZURE_OPENAI_DEPLOYMENT_NAME=opal-llm
+
+# Optional: Enable XGBoost model for ML value scoring
+OPAL_USE_XGB=true
+
+# Optional: Set deterministic seed for consistent results
+OPAL_DETERMINISTIC_SEED=42
+
+# To use this configuration:
+# 1. Replace 'your-api-key-here' with your actual API key from Azure portal
+# 2. Replace 'your-deployment-name-here' with the correct deployment name from Azure portal
+# 3. Copy these environment variables to your shell or .env file
+# 4. Or run: source azure_openai_config.txt
+# 5. Test with: python -c "from src.opal.llm.explain import is_consumer_llm_configured; print('LLM configured:', is_consumer_llm_configured())"
+
+# Features enabled with this configuration:
+# ✅ Enhanced consumer instrument selection with ML value scoring
+# ✅ LLM-powered explanations for "Why Sapphire chosen over ACH/BNPL"
+# ✅ Azure OpenAI integration with opal-llm deployment
+# ✅ Deterministic wallet choice negotiation
+# ✅ CloudEvent emission (ocn.opal.explanation.v1)
+# ✅ Comprehensive test coverage with JSON snapshots

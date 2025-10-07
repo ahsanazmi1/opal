@@ -1,0 +1,41 @@
+{
+  "model_type": "RandomForestClassifier",
+  "version": "1.0.0",
+  "trained_on": "2025-10-02T22:04:57.626945",
+  "feature_names": [
+    "amount",
+    "velocity_24h",
+    "velocity_amount_24h",
+    "time_of_day",
+    "day_of_week",
+    "account_age_days",
+    "avg_transaction_amount",
+    "transaction_frequency",
+    "new_merchant",
+    "unusual_amount",
+    "cross_border",
+    "amount_to_avg_ratio",
+    "velocity_risk_score"
+  ],
+  "n_features": 13,
+  "feature_importance": {
+    "amount": 0.06903494320627149,
+    "velocity_24h": 0.02515804635581901,
+    "velocity_amount_24h": 0.052382958064727675,
+    "time_of_day": 0.06116943077762494,
+    "day_of_week": 0.021155078236220495,
+    "account_age_days": 0.0532619625626421,
+    "avg_transaction_amount": 0.060498463891446495,
+    "transaction_frequency": 0.054403067007972164,
+    "new_merchant": 0.043071077270659376,
+    "unusual_amount": 0.32009873205794187,
+    "cross_border": 0.04960194615018911,
+    "amount_to_avg_ratio": 0.0988051879186926,
+    "velocity_risk_score": 0.09135910649979281
+  },
+  "model_parameters": {
+    "n_estimators": 100,
+    "max_depth": 10,
+    "class_weight": "balanced"
+  }
+}

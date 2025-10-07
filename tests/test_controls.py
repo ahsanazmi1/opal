@@ -214,7 +214,7 @@ class TestSpendControls:
         actor_id = "test_user_123"
         methods = SpendControls.get_available_payment_methods(actor_id)
 
-        assert len(methods) == 4  # Should return 4 stubbed methods
+        assert len(methods) == 13  # ML-enhanced version returns 13 payment methods
 
         # Check that all methods have required fields
         for method in methods:

@@ -8,8 +8,26 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
-from .controls import SpendControls, TransactionRequest
+from .controls import (
+    SpendControls,
+    TransactionRequest,
+    CounterNegotiationRequest,
+    CounterNegotiationResponse,
+    ConsumerInstrument,
+    MerchantProposal,
+)
 from .events import emit_method_selected_event
+from .negotiation import negotiateWalletChoice, enhanced_counter_negotiation_with_rail_evaluation
+
+# Import ML-enhanced controls
+try:
+    from .ml_enhanced_controls import ml_enhanced_controls
+
+    ML_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ ML models not available: {e}")
+    ML_AVAILABLE = False
+
 import sys
 import os
 
@@ -100,7 +118,10 @@ async def health_check():
 @app.get("/controls/limits", response_model=ControlLimitsResponse)
 async def get_control_limits():
     """Get current spend control limits and parameters."""
-    limits = SpendControls.get_control_limits()
+    if ML_AVAILABLE:
+        limits = ml_enhanced_controls.get_control_limits()
+    else:
+        limits = SpendControls.get_control_limits()
     return ControlLimitsResponse(**limits)
 
 
@@ -174,8 +195,11 @@ async def select_payment_method(request: SelectPaymentMethodRequest):
                 detail=f"Payment method {request.payment_method_id} not available for actor {request.actor_id}",
             )
 
-        # Evaluate against spend controls
-        control_result = SpendControls.evaluate_transaction(transaction_request)
+        # Evaluate against spend controls (ML-enhanced if available)
+        if ML_AVAILABLE:
+            control_result = ml_enhanced_controls.evaluate_transaction(transaction_request)
+        else:
+            control_result = SpendControls.evaluate_transaction(transaction_request)
 
         # Create response
         response = SelectPaymentMethodResponse(
@@ -258,6 +282,203 @@ async def get_payment_method(actor_id: str, method_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving payment method: {str(e)}",
+        )
+
+
+# Phase 3 - Consumer Counter-Negotiation Endpoints
+
+
+@app.post("/negotiate-wallet-choice", response_model=CounterNegotiationResponse)
+async def negotiate_wallet_choice(
+    actor_id: str,
+    transaction_amount: float,
+    available_instruments: List[ConsumerInstrument],
+    merchant_proposal: MerchantProposal,
+    consumer_preferences: Optional[Dict[str, Any]] = None,
+    currency: str = "USD",
+    merchant_id: Optional[str] = None,
+    mcc: Optional[str] = None,
+    channel: str = "online",
+    deterministic_seed: int = 42,
+) -> CounterNegotiationResponse:
+    """
+    Enhanced consumer wallet choice negotiation with ML value scoring.
+
+    This endpoint implements the core negotiateWalletChoice logic:
+    - ML-powered value scoring for each instrument using XGBoost/calibrated logistic
+    - Maximize rewards while minimizing out-of-pocket costs
+    - Deterministic selection with loyalty boost scenarios
+    - LLM-powered explanations for instrument selection
+    - Emits CloudEvents for consumer explanation (ocn.opal.explanation.v1)
+
+    Args:
+        actor_id: Consumer actor identifier
+        transaction_amount: Transaction amount
+        available_instruments: List of available consumer instruments
+        merchant_proposal: Merchant's rail proposal from Orca
+        consumer_preferences: Consumer preferences and constraints
+        currency: Transaction currency
+        merchant_id: Merchant identifier
+        mcc: Merchant Category Code
+        channel: Transaction channel
+        deterministic_seed: Seed for deterministic results
+    """
+    try:
+        response = await negotiateWalletChoice(
+            actor_id=actor_id,
+            transaction_amount=transaction_amount,
+            available_instruments=available_instruments,
+            merchant_proposal=merchant_proposal,
+            consumer_preferences=consumer_preferences,
+            currency=currency,
+            merchant_id=merchant_id,
+            mcc=mcc,
+            channel=channel,
+            deterministic_seed=deterministic_seed,
+        )
+
+        return response
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Wallet choice negotiation validation error: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Wallet choice negotiation failed: {str(e)}",
+        )
+
+
+@app.post("/counter-negotiate", response_model=CounterNegotiationResponse)
+async def counter_negotiate(request: CounterNegotiationRequest) -> CounterNegotiationResponse:
+    """
+    Perform consumer counter-negotiation against merchant proposal.
+
+    This endpoint implements Phase 3 consumer counter-negotiation logic:
+    - Evaluates available consumer instruments (credit cards, BNPL, debit, etc.)
+    - Considers rewards, loyalty tiers, and out-of-pocket costs
+    - Emits CloudEvents for consumer explanation (ocn.opal.explanation.v1)
+    - Returns optimal consumer instrument to counter merchant proposal
+    """
+    try:
+        # Perform enhanced counter-negotiation with rail evaluation
+        response = await enhanced_counter_negotiation_with_rail_evaluation(request)
+
+        return response
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Counter-negotiation validation error: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Counter-negotiation failed: {str(e)}",
+        )
+
+
+@app.get("/negotiation/status")
+async def get_negotiation_status() -> Dict[str, Any]:
+    """
+    Get consumer counter-negotiation service status and capabilities.
+    """
+    return {
+        "service": "opal-counter-negotiation",
+        "version": "0.3.0",
+        "status": "operational",
+        "phase": "Phase 3 - Consumer Counter-Negotiation",
+        "capabilities": {
+            "consumer_instrument_evaluation": True,
+            "reward_optimization": True,
+            "loyalty_tier_integration": True,
+            "out_of_pocket_calculation": True,
+            "cloudevents_emission": True,
+        },
+        "supported_instruments": [
+            "credit_card",
+            "debit_card",
+            "bnpl",
+            "wallet",
+            "bank_transfer",
+            "rewards_card",
+        ],
+        "default_weights": {
+            "reward_weight": 0.5,
+            "cost_weight": 0.3,
+            "preference_weight": 0.2,
+        },
+        "sample_instruments": {
+            "credit_card": "2% cashback with Gold loyalty tier",
+            "bnpl": "1% discount with flexible payment terms",
+            "debit_card": "0.5% cashback with instant settlement",
+        },
+    }
+
+
+@app.get("/negotiation/sample-instruments")
+async def get_sample_instruments() -> Dict[str, Any]:
+    """
+    Get sample consumer instruments for testing counter-negotiation.
+    """
+    from .negotiation import (
+        create_sample_credit_card,
+        create_sample_bnpl,
+        create_sample_debit_card,
+        create_sample_stablecoin_wallet,
+    )
+
+    return {
+        "sample_instruments": [
+            create_sample_credit_card().dict(),
+            create_sample_bnpl().dict(),
+            create_sample_debit_card().dict(),
+            create_sample_stablecoin_wallet().dict(),
+        ],
+        "usage": "Use these sample instruments in counter-negotiation requests for testing",
+    }
+
+
+@app.get("/ml/status", response_model=Dict[str, Any])
+async def get_ml_status():
+    """Get ML model status and configuration."""
+    if not ML_AVAILABLE:
+        return {"ml_enabled": False, "error": "ML models not available"}
+
+    try:
+        from .ml.fraud_detection import get_fraud_model
+        from .ml.value_scoring import get_value_scorer
+
+        fraud_model = get_fraud_model()
+        value_scorer = get_value_scorer()
+
+        return {
+            "ml_enabled": ml_enhanced_controls.use_ml,
+            "ml_weight": ml_enhanced_controls.ml_weight,
+            "models": {
+                "fraud_detection": {
+                    "loaded": fraud_model.is_loaded,
+                    "model_type": fraud_model.metadata.get("model_type", "unknown"),
+                    "version": fraud_model.metadata.get("version", "unknown"),
+                    "training_date": fraud_model.metadata.get("trained_on", "unknown"),
+                    "features": len(fraud_model.feature_names) if fraud_model.feature_names else 0,
+                },
+                "value_scoring": {
+                    "loaded": value_scorer.model is not None,
+                    "model_type": value_scorer.model_type,
+                    "version": value_scorer.model_version,
+                    "features": (
+                        len(value_scorer.feature_names) if value_scorer.feature_names else 0
+                    ),
+                },
+            },
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get ML status: {str(e)}",
         )
 
 

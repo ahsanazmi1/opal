@@ -1,0 +1,118 @@
+{
+  "merchant_proposal": {
+    "rail_type": "ACH",
+    "merchant_cost": 15.0,
+    "settlement_days": 1,
+    "risk_score": 0.3,
+    "explanation": "ACH rail offers lowest processing costs for the merchant",
+    "trace_id": "trace_consumer_20241201_001"
+  },
+  "transaction_amount": 2500.00,
+  "consumer_context": {
+    "actor_id": "consumer_12345",
+    "prefers_mobile": true,
+    "risk_tolerance": "medium",
+    "preferred_instruments": ["stablecoin", "credit_card"],
+    "preferred_rails": ["RTP", "FedNow", "Crypto"],
+    "available_instruments": {
+      "credit_card": {
+        "max_amount": 25000.0,
+        "reward_rate": 0.015,
+        "preferred": true
+      },
+      "stablecoin": {
+        "max_amount": 50000.0,
+        "reward_rate": 0.02,
+        "preferred": true
+      },
+      "debit_card": {
+        "max_amount": 10000.0,
+        "reward_rate": 0.005,
+        "preferred": false
+      }
+    },
+    "available_rails": {
+      "RTP": {
+        "supported_instruments": ["debit_card"],
+        "consumer_benefit": 0.005,
+        "preferred": true
+      },
+      "FedNow": {
+        "supported_instruments": ["debit_card"],
+        "consumer_benefit": 0.01,
+        "preferred": true
+      },
+      "Crypto": {
+        "supported_instruments": ["stablecoin"],
+        "consumer_benefit": 0.03,
+        "preferred": true
+      },
+      "Card": {
+        "supported_instruments": ["credit_card", "debit_card"],
+        "consumer_benefit": 0.02,
+        "preferred": false
+      }
+    }
+  },
+  "expected_optimal_combination": {
+    "rail_type": "Crypto",
+    "instrument_type": "stablecoin",
+    "total_consumer_value": 0.92,
+    "value": 50.00,
+    "convenience_score": 1.0,
+    "cost_savings": 12.50,
+    "preference_bonus": 0.2,
+    "explanation": "stablecoin via Crypto rail, earns $50.00 in rewards, high convenience, saves $12.50, instant processing.",
+    "confidence": 0.95,
+    "is_preferred": true,
+    "is_available": true
+  },
+  "expected_alternatives": [
+    {
+      "rail_type": "FedNow",
+      "instrument_type": "debit_card",
+      "total_consumer_value": 0.75,
+      "value": 12.50,
+      "convenience_score": 0.8,
+      "cost_savings": 6.25,
+      "preference_bonus": 0.1,
+      "explanation": "debit card via FedNow rail, earns $12.50 in rewards, good convenience, saves $6.25, instant processing.",
+      "confidence": 0.85,
+      "is_preferred": true,
+      "is_available": true
+    },
+    {
+      "rail_type": "Card",
+      "instrument_type": "credit_card",
+      "total_consumer_value": 0.68,
+      "value": 37.50,
+      "convenience_score": 0.7,
+      "cost_savings": 0.0,
+      "preference_bonus": 0.1,
+      "explanation": "credit card via Card rail, earns $37.50 in rewards, good convenience.",
+      "confidence": 0.90,
+      "is_preferred": true,
+      "is_available": true
+    }
+  ],
+  "expected_consumer_rewards": [
+    {
+      "reward_type": "crypto_rewards",
+      "rate": 0.02,
+      "value": 50.00,
+      "description": "Crypto rewards from Stablecoin"
+    },
+    {
+      "reward_type": "convenience",
+      "rate": 0.0,
+      "value": 0.0,
+      "description": "High convenience and ease of use"
+    },
+    {
+      "reward_type": "cost_savings",
+      "rate": 0.005,
+      "value": 12.50,
+      "description": "Cost savings compared to merchant proposal"
+    }
+  ]
+}
