@@ -471,7 +471,7 @@ class MultiRailConsumerNegotiator:
 
         consumer_rewards = [
             ConsumerReward(
-                reward_type="cashback", reward_value=0.0, description="No rewards available"
+                reward_type="cashback", rate=0.0, value=0.0, description="No rewards available"
             )
         ]
 

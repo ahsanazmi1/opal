@@ -63,7 +63,7 @@ class TestPaymentMethods:
         assert response.status_code == 200
 
         data = response.json()
-        assert len(data) == 4  # Should return 4 stubbed methods
+        assert len(data) == 13  # ML-enhanced version returns 13 payment methods
 
         for method in data:
             assert "method_id" in method
@@ -128,7 +128,7 @@ class TestPaymentMethodSelection:
         assert data["token_reference"] is not None
         assert data["token_reference"].startswith("tok_test_user_123_")
         assert len(data["reasons"]) > 0
-        assert data["control_version"] == "v1.0.0"
+        assert data["control_version"] == "ml-enhanced-v1.0.0"
 
     def test_declined_selection_high_risk_mcc(self, client):
         """Test declined selection for high-risk MCC."""
