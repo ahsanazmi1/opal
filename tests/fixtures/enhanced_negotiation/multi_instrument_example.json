@@ -22,7 +22,8 @@
       "rewards": [
         {
           "reward_type": "cashback",
-          "reward_value": 2.5,
+          "rate": 0.025,
+          "value": 5.0,
           "description": "2.5% cashback on all purchases"
         }
       ],
@@ -47,7 +48,8 @@
       "rewards": [
         {
           "reward_type": "bnpl_benefits",
-          "reward_value": 3.0,
+          "rate": 0.015,
+          "value": 3.0,
           "description": "No interest if paid within 30 days"
         }
       ],
@@ -71,7 +73,8 @@
       "rewards": [
         {
           "reward_type": "crypto_rewards",
-          "reward_value": 2.4,
+          "rate": 0.012,
+          "value": 2.4,
           "description": "1.2% crypto rewards on USDC"
         }
       ],

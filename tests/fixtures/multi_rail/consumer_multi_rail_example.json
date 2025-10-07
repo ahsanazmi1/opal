@@ -58,7 +58,7 @@
     "rail_type": "Crypto",
     "instrument_type": "stablecoin",
     "total_consumer_value": 0.92,
-    "reward_value": 50.00,
+    "value": 50.00,
     "convenience_score": 1.0,
     "cost_savings": 12.50,
     "preference_bonus": 0.2,
@@ -72,7 +72,7 @@
       "rail_type": "FedNow",
       "instrument_type": "debit_card",
       "total_consumer_value": 0.75,
-      "reward_value": 12.50,
+      "value": 12.50,
       "convenience_score": 0.8,
       "cost_savings": 6.25,
       "preference_bonus": 0.1,
@@ -85,7 +85,7 @@
       "rail_type": "Card",
       "instrument_type": "credit_card",
       "total_consumer_value": 0.68,
-      "reward_value": 37.50,
+      "value": 37.50,
       "convenience_score": 0.7,
       "cost_savings": 0.0,
       "preference_bonus": 0.1,
@@ -98,17 +98,20 @@
   "expected_consumer_rewards": [
     {
       "reward_type": "crypto_rewards",
-      "reward_value": 50.00,
+      "rate": 0.02,
+      "value": 50.00,
       "description": "Crypto rewards from Stablecoin"
     },
     {
       "reward_type": "convenience",
-      "reward_value": 0.0,
+      "rate": 0.0,
+      "value": 0.0,
       "description": "High convenience and ease of use"
     },
     {
       "reward_type": "cost_savings",
-      "reward_value": 12.50,
+      "rate": 0.005,
+      "value": 12.50,
       "description": "Cost savings compared to merchant proposal"
     }
   ]

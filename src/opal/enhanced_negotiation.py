@@ -123,7 +123,7 @@ class MultiInstrumentNegotiator:
 
         total_reward_value = 0.0
         for reward in instrument.rewards:
-            base_value = reward.reward_value
+            base_value = reward.value
             multiplier = self.reward_multipliers.get(reward.reward_type, 1.0)
 
             # Apply category bonuses
