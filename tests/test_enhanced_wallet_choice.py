@@ -22,7 +22,7 @@ from src.opal.ml.value_scoring import score_consumer_instrument_value, ConsumerV
 
 class TestMLValueScoring:
     """Test ML-powered consumer value scoring."""
-    
+
     def test_xgboost_value_scoring_basic(self):
         """Test basic XGBoost value scoring functionality."""
         features = ConsumerValueFeatures(
@@ -32,9 +32,9 @@ class TestMLValueScoring:
             card_tier=2,  # Premium tier
             transaction_amount=1000.0,
             net_reward_value=15.0,  # $15 net reward
-            annual_fee=95.0
+            annual_fee=95.0,
         )
-        
+
         result = score_consumer_instrument_value(
             rewards_rate=features.rewards_rate,
             fee_rate=features.fee_rate,
@@ -42,16 +42,16 @@ class TestMLValueScoring:
             card_tier=features.card_tier,
             transaction_amount=features.transaction_amount,
             net_reward_value=features.net_reward_value,
-            annual_fee=features.annual_fee
+            annual_fee=features.annual_fee,
         )
-        
+
         # Verify result structure
         assert 0.0 <= result.value_score <= 1.0
         assert 0.0 <= result.confidence <= 1.0
         assert result.model_type in ["xgboost", "deterministic_fallback"]
         assert len(result.features_used) > 0
         assert result.prediction_time_ms >= 0
-    
+
     def test_value_scoring_with_different_tiers(self):
         """Test value scoring across different card tiers."""
         # Basic tier
@@ -61,9 +61,9 @@ class TestMLValueScoring:
             loyalty_bonus=1.0,
             card_tier=1,
             transaction_amount=1000.0,
-            net_reward_value=5.0
+            net_reward_value=5.0,
         )
-        
+
         # Premium tier
         premium_result = score_consumer_instrument_value(
             rewards_rate=0.025,
@@ -71,9 +71,9 @@ class TestMLValueScoring:
             loyalty_bonus=1.5,
             card_tier=2,
             transaction_amount=1000.0,
-            net_reward_value=12.5
+            net_reward_value=12.5,
         )
-        
+
         # Elite tier
         elite_result = score_consumer_instrument_value(
             rewards_rate=0.03,
@@ -81,9 +81,9 @@ class TestMLValueScoring:
             loyalty_bonus=2.0,
             card_tier=3,
             transaction_amount=1000.0,
-            net_reward_value=20.0
+            net_reward_value=20.0,
         )
-        
+
         # Elite should score higher than premium, premium higher than basic
         assert elite_result.value_score > premium_result.value_score
         assert premium_result.value_score > basic_result.value_score
@@ -91,7 +91,7 @@ class TestMLValueScoring:
 
 class TestEnhancedWalletChoice:
     """Test enhanced wallet choice negotiation."""
-    
+
     def create_sample_instruments(self):
         """Create sample consumer instruments for testing."""
         sapphire_card = ConsumerInstrument(
@@ -107,7 +107,7 @@ class TestEnhancedWalletChoice:
                     reward_type="cashback",
                     rate=0.03,  # 3% cashback
                     value=30.0,  # $30 for $1000 transaction
-                    description="3% cashback on all purchases"
+                    description="3% cashback on all purchases",
                 )
             ],
             total_reward_value=30.0,
@@ -115,9 +115,9 @@ class TestEnhancedWalletChoice:
             loyalty_multiplier=1.5,
             net_value=30.0,
             value_score=0.8,
-            eligible=True
+            eligible=True,
         )
-        
+
         basic_card = ConsumerInstrument(
             instrument_id="basic_001",
             instrument_type="credit_card",
@@ -131,7 +131,7 @@ class TestEnhancedWalletChoice:
                     reward_type="cashback",
                     rate=0.015,  # 1.5% cashback
                     value=15.0,  # $15 for $1000 transaction
-                    description="1.5% cashback on all purchases"
+                    description="1.5% cashback on all purchases",
                 )
             ],
             total_reward_value=15.0,
@@ -139,9 +139,9 @@ class TestEnhancedWalletChoice:
             loyalty_multiplier=1.0,
             net_value=15.0,
             value_score=0.6,
-            eligible=True
+            eligible=True,
         )
-        
+
         bnpl_option = ConsumerInstrument(
             instrument_id="bnpl_001",
             instrument_type="bnpl",
@@ -156,11 +156,11 @@ class TestEnhancedWalletChoice:
             loyalty_multiplier=1.0,
             net_value=0.0,
             value_score=0.3,
-            eligible=True
+            eligible=True,
         )
-        
+
         return [sapphire_card, basic_card, bnpl_option]
-    
+
     def create_merchant_proposal(self):
         """Create sample merchant proposal."""
         return MerchantProposal(
@@ -169,62 +169,71 @@ class TestEnhancedWalletChoice:
             settlement_days=2,
             risk_score=0.3,
             explanation="ACH selected for cost efficiency",
-            trace_id="trace_enhanced_test_001"
+            trace_id="trace_enhanced_test_001",
         )
-    
+
     def test_enhanced_wallet_choice_basic(self):
         """Test basic enhanced wallet choice negotiation."""
         instruments = self.create_sample_instruments()
         merchant_proposal = self.create_merchant_proposal()
-        
+
         # Run the async function
-        response = asyncio.run(negotiateWalletChoice(
-            actor_id="test_consumer_001",
-            transaction_amount=1000.0,
-            available_instruments=instruments,
-            merchant_proposal=merchant_proposal,
-            consumer_preferences={"prefer_rewards": True},
-            deterministic_seed=42
-        ))
-        
+        response = asyncio.run(
+            negotiateWalletChoice(
+                actor_id="test_consumer_001",
+                transaction_amount=1000.0,
+                available_instruments=instruments,
+                merchant_proposal=merchant_proposal,
+                consumer_preferences={"prefer_rewards": True},
+                deterministic_seed=42,
+            )
+        )
+
         # Verify response structure
         assert response.selected_instrument is not None
         assert response.counter_proposal is not None
         assert len(response.explanation) > 0
         assert response.trace_id == merchant_proposal.trace_id
         assert response.win_win_score >= 0.0
-        
+
         # Verify ML scoring was applied
         assert response.negotiation_metadata["ml_value_scoring"] is True
         assert "ml_value_scores" in response.negotiation_metadata
         assert len(response.negotiation_metadata["ml_value_scores"]) > 0
-    
+
     def test_deterministic_choice_consistency(self):
         """Test that deterministic seed produces consistent results."""
         instruments = self.create_sample_instruments()
         merchant_proposal = self.create_merchant_proposal()
-        
+
         # Run negotiation multiple times with same seed
-        response1 = asyncio.run(negotiateWalletChoice(
-            actor_id="test_consumer_001",
-            transaction_amount=1000.0,
-            available_instruments=instruments,
-            merchant_proposal=merchant_proposal,
-            deterministic_seed=123
-        ))
-        
-        response2 = asyncio.run(negotiateWalletChoice(
-            actor_id="test_consumer_001",
-            transaction_amount=1000.0,
-            available_instruments=instruments,
-            merchant_proposal=merchant_proposal,
-            deterministic_seed=123
-        ))
-        
+        response1 = asyncio.run(
+            negotiateWalletChoice(
+                actor_id="test_consumer_001",
+                transaction_amount=1000.0,
+                available_instruments=instruments,
+                merchant_proposal=merchant_proposal,
+                deterministic_seed=123,
+            )
+        )
+
+        response2 = asyncio.run(
+            negotiateWalletChoice(
+                actor_id="test_consumer_001",
+                transaction_amount=1000.0,
+                available_instruments=instruments,
+                merchant_proposal=merchant_proposal,
+                deterministic_seed=123,
+            )
+        )
+
         # Results should be identical
-        assert response1.selected_instrument.instrument_id == response2.selected_instrument.instrument_id
+        assert (
+            response1.selected_instrument.instrument_id
+            == response2.selected_instrument.instrument_id
+        )
         assert response1.win_win_score == response2.win_win_score
-        
+
         # ML scores should be identical
         scores1 = response1.negotiation_metadata["ml_value_scores"]
         scores2 = response2.negotiation_metadata["ml_value_scores"]

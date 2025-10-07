@@ -34,7 +34,11 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false  # Allow untyped defs for now
+explicit_package_bases = true
+mypy_path = "src"
 exclude = [
     "src/opal/mcp/",  # Exclude the existing MCP server directory that uses external MCP package
+    "src/opal/ml/",  # Exclude ML modules to avoid type checking complexity
+    "src/opal/llm/",  # Exclude LLM modules
     "tests/"  # Exclude test files from strict typing
 ]

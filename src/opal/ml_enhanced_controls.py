@@ -150,17 +150,18 @@ class MLEnhancedControls:
 
         random.seed(hash(actor_id) % 1000)  # Deterministic for testing
 
+        # nosec B311: Using random for test/demo data generation, not cryptographic purposes
         return {
-            "velocity_24h": random.randint(0, 15),
-            "velocity_amount_24h": random.uniform(0, 5000),
-            "time_of_day": random.randint(0, 23),
-            "day_of_week": random.randint(0, 6),
-            "account_age_days": random.randint(30, 3650),
-            "avg_transaction_amount": random.uniform(50, 500),
-            "transaction_frequency": random.uniform(0.5, 5.0),
-            "new_merchant": random.choice([True, False]),
-            "unusual_amount": random.choice([True, False]),
-            "cross_border": random.choice([True, False]),
+            "velocity_24h": random.randint(0, 15),  # nosec B311
+            "velocity_amount_24h": random.uniform(0, 5000),  # nosec B311
+            "time_of_day": random.randint(0, 23),  # nosec B311
+            "day_of_week": random.randint(0, 6),  # nosec B311
+            "account_age_days": random.randint(30, 3650),  # nosec B311
+            "avg_transaction_amount": random.uniform(50, 500),  # nosec B311
+            "transaction_frequency": random.uniform(0.5, 5.0),  # nosec B311
+            "new_merchant": random.choice([True, False]),  # nosec B311
+            "unusual_amount": random.choice([True, False]),  # nosec B311
+            "cross_border": random.choice([True, False]),  # nosec B311
         }
 
     def get_control_limits(self) -> Dict[str, Any]:
