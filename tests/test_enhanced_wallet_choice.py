@@ -190,16 +190,16 @@ class TestEnhancedWalletChoice:
         )
 
         # Verify response structure
-        assert response.selected_instrument is not None
-        assert response.counter_proposal is not None
+        assert response.consumer_proposal is not None
         assert len(response.explanation) > 0
         assert response.trace_id == merchant_proposal.trace_id
-        assert response.win_win_score >= 0.0
+        assert "win_win_score" in response.metadata
+        assert response.metadata["win_win_score"] >= 0.0
 
         # Verify ML scoring was applied
-        assert response.negotiation_metadata["ml_value_scoring"] is True
-        assert "ml_value_scores" in response.negotiation_metadata
-        assert len(response.negotiation_metadata["ml_value_scores"]) > 0
+        assert response.metadata.get("ml_value_scoring") is True
+        assert "ml_value_scores" in response.metadata
+        assert len(response.metadata.get("ml_value_scores", {})) > 0
 
     def test_deterministic_choice_consistency(self):
         """Test that deterministic seed produces consistent results."""
@@ -229,14 +229,14 @@ class TestEnhancedWalletChoice:
 
         # Results should be identical
         assert (
-            response1.selected_instrument.instrument_id
-            == response2.selected_instrument.instrument_id
+            response1.consumer_proposal.instrument_type
+            == response2.consumer_proposal.instrument_type
         )
-        assert response1.win_win_score == response2.win_win_score
+        assert response1.metadata.get("win_win_score") == response2.metadata.get("win_win_score")
 
         # ML scores should be identical
-        scores1 = response1.negotiation_metadata["ml_value_scores"]
-        scores2 = response2.negotiation_metadata["ml_value_scores"]
+        scores1 = response1.metadata.get("ml_value_scores", {})
+        scores2 = response2.metadata.get("ml_value_scores", {})
         assert scores1 == scores2
 
 

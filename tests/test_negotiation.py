@@ -213,7 +213,7 @@ class TestInstrumentEvaluation:
             mcc="5411",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -250,7 +250,7 @@ class TestInstrumentEvaluation:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -281,7 +281,7 @@ class TestInstrumentEvaluation:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -315,7 +315,7 @@ class TestCounterNegotiation:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -350,7 +350,7 @@ class TestCounterNegotiation:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -385,7 +385,7 @@ class TestCounterNegotiation:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=200.0,  # Higher merchant cost
                 settlement_days=1,
                 risk_score=0.3,
@@ -418,7 +418,7 @@ class TestExplanationGeneration:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -486,7 +486,7 @@ class TestDeterministicOutcomes:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -523,7 +523,7 @@ class TestDeterministicOutcomes:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -545,7 +545,7 @@ class TestDeterministicOutcomes:
             merchant_id="test_merchant",
             channel="online",
             merchant_proposal=MerchantProposal(
-                rail_type="Credit",
+                rail_type="Card",
                 merchant_cost=150.0,
                 settlement_days=1,
                 risk_score=0.3,
@@ -579,7 +579,7 @@ class TestSampleInstrumentCreation:
         card = create_sample_credit_card()
 
         assert card.instrument_type == "credit_card"
-        assert card.provider == "Visa"
+        assert card.provider == "Chase"
         assert card.loyalty_tier == "Gold"
         assert card.loyalty_multiplier == 1.2
         assert len(card.rewards) == 1

@@ -616,7 +616,7 @@ def golden_fixtures():
                 "out_of_pocket_cost": 0.0,
                 "available_balance": 5000.0,
                 "rewards": [
-                    {"reward_type": "cashback", "reward_value": 1.5, "description": "1.5% cashback"}
+                    {"reward_type": "cashback", "rate": 0.015, "value": 1.5, "description": "1.5% cashback"}
                 ],
                 "total_reward_value": 1.5,
                 "loyalty_multiplier": 1.0,
